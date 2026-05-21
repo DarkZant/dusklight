@@ -131,6 +131,7 @@ struct UserSettings {
         ConfigVar<bool> enableQuickTransform;
         ConfigVar<bool> hideTvSettingsScreen;
         ConfigVar<bool> biggerWallets;
+        ConfigVar<bool> uncappedWallets;
         ConfigVar<bool> noReturnRupees;
         ConfigVar<bool> disableRupeeCutscenes;
         ConfigVar<bool> noSwordRecoil;

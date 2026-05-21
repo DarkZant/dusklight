@@ -1979,6 +1979,16 @@ void dMeter2Draw_c::setAlphaLightDropAnimeMax() {
 }
 
 void dMeter2Draw_c::drawRupee(s16 i_rupeeNum) {
+    /* 
+        The game crashes if i_rupeeNum > 9 999 since the UI wasn't made to display five digits. 
+        Possible workaround is to cap the UI but keep the rupee count intact by campling.
+        Doing so would allow the rupee count to go to 65 535, the u16 limit.
+        Working example: 
+
+        if (i_rupeeNum > 9999) {
+            i_rupeeNum = 9999;
+        }
+    */ 
     mpRupeeTexture[3][0]->hide();
     mpRupeeTexture[3][1]->hide();
 

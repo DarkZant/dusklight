@@ -1146,6 +1146,8 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         leftPane.add_section("Quality of Life");
         addOption("Bigger Wallets", getSettings().game.biggerWallets,
             "Wallet sizes are like in the HD version. (500, 1000, 2000)");
+        addOption("Uncapped Wallets", getSettings().game.uncappedWallets,
+            "Wallet sizes no longer matter and the max rupee count is 9 999.");
         addOption("Disable Rupee Cutscenes", getSettings().game.disableRupeeCutscenes,
             "Rupees will not play cutscenes after you have collected them the first time.");
         addOption("Faster Climbing", getSettings().game.fastClimbing,
