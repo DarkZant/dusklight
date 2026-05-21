@@ -30,8 +30,7 @@ UserSettings g_userSettings = {
         // Quality of Life
         .enableQuickTransform {"game.enableQuickTransform", false},
         .hideTvSettingsScreen {"game.hideTvSettingsScreen", true},
-        .biggerWallets {"game.biggerWallets", false},
-        .uncappedWallets {"game.uncappedWallets", false},
+        .walletSizes{"game.walletSizes", 0},
         .noReturnRupees {"game.noReturnRupees", false},
         .disableRupeeCutscenes {"game.disableRupeeCutscenes", false},
         .noSwordRecoil {"game.noSwordRecoil", false},
@@ -199,8 +198,9 @@ void registerSettings() {
     Register(g_userSettings.game.language);
     Register(g_userSettings.game.enableQuickTransform);
     Register(g_userSettings.game.hideTvSettingsScreen);
-    Register(g_userSettings.game.biggerWallets);
-    Register(g_userSettings.game.uncappedWallets);
+    //Register(g_userSettings.game.biggerWallets);
+    //Register(g_userSettings.game.uncappedWallets);
+    Register(g_userSettings.game.walletSizes);
     Register(g_userSettings.game.noReturnRupees);
     Register(g_userSettings.game.disableRupeeCutscenes);
     Register(g_userSettings.game.noSwordRecoil);
