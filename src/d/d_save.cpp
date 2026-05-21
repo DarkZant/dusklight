@@ -157,7 +157,7 @@ u16 dSv_player_status_a_c::getRupeeMax() const {
             case 0:  // Default
                 return 1000;
             case 1:  // HD
-                return 5000;
+                return 2000;
             case 2:  // Large
                 return 9999;
             }
