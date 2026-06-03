@@ -187,7 +187,6 @@ struct UserSettings {
         ConfigVar<bool> midnasLamentNonStop;
 
         // Input
-        ConfigVar<GyroMode> gyroMode;
         ConfigVar<bool> enableGyroAim;
         ConfigVar<bool> enableGyroRollgoal;
         ConfigVar<float> gyroSensitivityX;
@@ -197,6 +196,11 @@ struct UserSettings {
         ConfigVar<float> gyroDeadband;
         ConfigVar<bool> gyroInvertPitch;
         ConfigVar<bool> gyroInvertYaw;
+        ConfigVar<bool> enableMouseCamera;
+        ConfigVar<bool> enableMouseAim;
+        ConfigVar<float> mouseAimSensitivity;
+        ConfigVar<float> mouseCameraSensitivity;
+        ConfigVar<bool> invertMouseY;
         ConfigVar<bool> freeCamera;
         ConfigVar<bool> invertCameraXAxis;
         ConfigVar<bool> invertCameraYAxis;
@@ -204,10 +208,13 @@ struct UserSettings {
         ConfigVar<bool> invertFirstPersonYAxis;
         ConfigVar<bool> invertAirSwimX;
         ConfigVar<bool> invertAirSwimY;
-        ConfigVar<float> freeCameraSensitivity;
+        ConfigVar<float> freeCameraXSensitivity;
+        ConfigVar<float> freeCameraYSensitivity;
         ConfigVar<bool> debugFlyCam;
         ConfigVar<bool> debugFlyCamLockEvents;
         ConfigVar<bool> allowBackgroundInput;
+        std::array<ConfigVar<bool>, 4> enableLED;
+        ConfigVar<bool> swapDirectSelect;
 
         // Cheats
         ConfigVar<bool> infiniteHearts;
