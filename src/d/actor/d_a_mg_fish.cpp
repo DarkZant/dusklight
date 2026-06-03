@@ -46,17 +46,17 @@
 #define ACTION_MG_FISH_MF_ESA_HIT 71
 #define ACTION_MG_FISH_MF_ESA_CATCH 72
 
-#define GEDOU_KIND_LM_1 0
+#define GEDOU_KIND_LM_1 0 // Hyrule Bass (Lure)
 #define GEDOU_KIND_RI_1 1
-#define GEDOU_KIND_NP_1 2
+#define GEDOU_KIND_NP_1 2 // Hylian Pike (Lure)
 #define GEDOU_KIND_CF_1 3
 #define GEDOU_KIND_KS_1 4
-#define GEDOU_KIND_BG 5
+#define GEDOU_KIND_BG 5   // Greengill (Bobber)
 #define GEDOU_KIND_LM_2 6
 #define GEDOU_KIND_RI_2 7
 #define GEDOU_KIND_NP_2 8
 #define GEDOU_KIND_CF_2 9
-#define GEDOU_KIND_KS_2 10
+#define GEDOU_KIND_KS_2 10 // Reekfish
 #define GEDOU_KIND_BT 20
 #define GEDOU_KIND_LH 21
 #define GEDOU_KIND_SP 22
@@ -2044,6 +2044,13 @@ static void mf_jump(mg_fish_class* i_this) {
             commonXyz2.y = 10.0f + i_this->mSurfaceY;
             fopAcM_createItem(&commonXyz2, 0, -1, -1, NULL, NULL, 0);
             dComIfGs_onEventBit(dSv_event_flag_c::saveBitLabels[0x1d6]);
+            #if TARGET_PC
+            // Reekfish are deleted only when they enter the water 
+            if (dusk::getSettings().game.keepFish && i_this->mGedouKind == GEDOU_KIND_KS_2) { 
+                fopAcM_delete(&i_this->actor); // Deletes the fish
+                return;
+            }
+            #endif
         }
         break;
     }
@@ -2991,7 +2998,7 @@ static void action(mg_fish_class* i_this) {
         }
     }
 
-    if (i_this->mCurAction == ACTION_MG_FISH_MF_JUMP && i_this->actor.speedF == 0.0f) {
+    if (i_this->mCurAction == ACTION_MG_FISH_MF_JUMP && i_this->actor.speedF == 0.0f) {       
         s32 unkSint2 = 7000;
         if (i_this->mJointScale >= 0.7f) {
             unkSint2 = 5000;
@@ -3786,7 +3793,7 @@ static int daMg_Fish_Create(fopAc_ac_c* i_this) {
             } // mCyl
         }
     };
-    static f32 fish_max[11] = {
+    static f32 fish_max[11] = { // Max fish sizes
         0.828f,
         0.998f,
         0.998f,
@@ -3796,7 +3803,7 @@ static int daMg_Fish_Create(fopAc_ac_c* i_this) {
         0.448f,
         0.588f,
         0.588f,
-        0.548f,
+        0.548f, // Reekfish
         0.708f,
     };
 

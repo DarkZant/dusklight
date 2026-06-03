@@ -2680,7 +2680,7 @@ static void lure_catch(dmg_rod_class* i_this) {
             i_this->msg_flow_state = 2;
             int sp10 = 0;
 
-            if (i_this->field_0x14c0 != 0) {
+            if (i_this->field_0x14c0 != 0) { // Keep the fish
                 data_80450C9B = 1;
                 if (dMsgObject_getSelectCursorPos() == 0) {
                     dComIfGs_setEventReg(check_kind[fish_kind], var_r26);
@@ -2716,6 +2716,15 @@ static void lure_catch(dmg_rod_class* i_this) {
             } else {
                 mgfish_a->health = 2;
             }
+            #if TARGET_PC
+            if (dusk::getSettings().game.keepFish && mgfish_a->health == 1) {
+                actor->health = 1; // Set the rod action back to standby
+                i_this->play_cam_mode = 2;
+                i_this->play_cam_timer = 20;
+                daAlink_getAlinkActorClass()->onFishingKeep();
+                mgfish_a->health = 2; // Always keep the fish (it will be deleted)
+            }
+            #endif
         }
     }
 
@@ -3715,6 +3724,23 @@ static void uki_standby(dmg_rod_class* i_this) {
 
     actor->eyePos = i_this->hook_pos;
 
+    // Allows the camera to look down to look at the lure when bobber fishing when pressing R
+    #if TARGET_PC
+    if (mDoCPd_c::getAnalogR(PAD_1)) {
+        // Looking down to the lure
+        if ((i_this->play_cam_timer > 50 && i_this->play_cam_mode == 7) ||
+            (i_this->play_cam_timer > 15 && i_this->play_cam_mode == 89))
+        {
+            i_this->play_cam_mode = 88;
+            i_this->play_cam_timer = 0;
+        // Looking back up to the bobber    
+        } else if (i_this->play_cam_timer > 15 && i_this->play_cam_mode == 88) {
+            i_this->play_cam_mode = 89;
+            i_this->play_cam_timer = 0;
+        }
+    }
+    #endif
+
     BOOL sp8 = 0;
     if (i_this->prev_rod_substick_y < 0.0f) {
         if (i_this->rod_substick_y - i_this->prev_rod_substick_y >= 0.2f) {
@@ -3979,7 +4005,7 @@ static void uki_catch(dmg_rod_class* i_this) {
     if (l_HIO.force_fish_msg_output != 0) {
         fish_kind = l_HIO.force_fish_msg_output - 1;
     }
-
+    // Catching trash
     if (mgfish->mCaughtType == MG_CATCH_BT || mgfish->mCaughtType == MG_CATCH_KN || mgfish->mCaughtType == MG_CATCH_ED || mgfish->mCaughtType == MG_CATCH_SY) {
         if (i_this->play_cam_timer == 80) {
             Z2GetAudioMgr()->subBgmStart(Z2BGM_FISHING_GET3);
@@ -3989,13 +4015,16 @@ static void uki_catch(dmg_rod_class* i_this) {
                 daAlink_getAlinkActorClass()->changeFishGetFace(4);
             }
         }
-    } else if (i_this->play_cam_timer == 40) {
+    } else if (i_this->play_cam_timer == 40) { 
+        // Catching treasure / reekfish
         if (fish_kind == 4 || mgfish->mCaughtType == MG_CATCH_SP || mgfish->mCaughtType == MG_CATCH_BB || mgfish->mCaughtType == MG_CATCH_BIN || mgfish->mCaughtType == MG_CATCH_LH) {
             Z2GetAudioMgr()->subBgmStart(Z2BGM_FISHING_GET1);
             daAlink_getAlinkActorClass()->changeFishGetFace(2);
+        // Catching a fish for the first time or the biggest fish of it's type yet
         } else if (i_this->field_0x14c0 != 0 || dComIfGs_getFishSize(fish_kind) == 0) {
             Z2GetAudioMgr()->subBgmStart(Z2BGM_FISHING_GET1);
             daAlink_getAlinkActorClass()->changeFishGetFace(2);
+        // Catching regular fish
         } else {
             Z2GetAudioMgr()->subBgmStart(Z2BGM_FISHING_GET2);
             daAlink_getAlinkActorClass()->changeFishGetFace(1);
@@ -4279,10 +4308,10 @@ static void uki_main(dmg_rod_class* i_this) {
                          dComIfGs_getFishNum(1) +
                          dComIfGs_getFishNum(2);
             OS_REPORT(" GET NO %d\n", get_no);
-
+            // Fishing Hole bobber treasure / trash catching logic
             if (strcmp(dComIfGp_getStartStageName(), "F_SP127") == 0) {
                 if (get_no >= 5 && cM_rndF(1.0f) < 0.15f) {
-                    int rnd_catch = cM_rndF(4.99f);
+                    int rnd_catch = cM_rndF(4.99f); // Equal chance between Boot, Wheel, Can, Twig or Rupee Bag
                     if (rnd_catch == 0) {
                         mgfish->mCaughtType = MG_CATCH_BT;
                     } else if (rnd_catch == 1) {
@@ -4295,7 +4324,7 @@ static void uki_main(dmg_rod_class* i_this) {
                         mgfish->mCaughtType = MG_CATCH_SY;
                     }
                 }
-
+                // Bottle logic
                 if (!dComIfGs_isEventBit(dSv_event_flag_c::saveBitLabels[468])) {
                     if (cM_rndF(1.0f) <= 0.5f) {
                         cXyz bin_pos(6800.0f, 30.0f, -270.0f);
@@ -4309,7 +4338,7 @@ static void uki_main(dmg_rod_class* i_this) {
                         }
                     }
                 }
-
+                // Sinking lure logic
                 if (!dComIfGs_isEventBit(dSv_event_flag_c::saveBitLabels[466]) && i_this->hook_kind == 1) {
                     static cXyz sp_pos[] = {
                         cXyz(-4600.0f, 0.0f, 3100.0f),
@@ -5632,7 +5661,7 @@ static void play_camera_u(dmg_rod_class* i_this) {
                 MtxPosition(&spCC, &mgfish_a->current.pos);
                 mgfish_a->current.pos += player->current.pos;
 
-                mgfish->mCurAction = 0x35;
+                mgfish->mCurAction = 53;
                 mgfish->mActionPhase = 10;
                 mgfish->field_0x659 = 0;
                 mgfish->field_0x624[1] = 0;
@@ -5644,6 +5673,17 @@ static void play_camera_u(dmg_rod_class* i_this) {
                 }
 
                 mgfish->field_0x5f6 = player->shape_angle.y;
+                #if TARGET_PC
+                if (dusk::getSettings().game.keepFish && mgfish->mGedouKind != 10)  // Disabled for Reekfish
+                {
+                    // Summons a heart at Link's position with no speed so it's picked up instantly.
+                    // This heart replaces the one fishes usually spawn when going back into the water.
+                    f32 i_speedF = 0.0f, i_speedY = 0.0f;
+                    fopAcM_fastCreateItem(&mgfish_a->current.pos, 0, -1, NULL, NULL, &i_speedF, &i_speedY, -1, 0, NULL);
+                    // Deletes the fish
+                    fopAcM_delete(mgfish_a);
+                }
+                #endif
             }
 
             i_this->action = ACTION_UKI_READY;
@@ -5657,6 +5697,15 @@ static void play_camera_u(dmg_rod_class* i_this) {
         (void)0;
         break;
     }
+    // Used to look at the lure when bobber fishing
+    case 88:
+        if (i_this->play_cam_timer < 15)
+            i_this->play_cam_center.y -= 13.0f;
+        break;
+    case 89: 
+        if (i_this->play_cam_timer < 15)
+            i_this->play_cam_center.y += 13.0f;
+        break;
     case 90:
         sp18 = 1;
         break;

@@ -1167,6 +1167,12 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             "Link will not recoil when his sword hits walls.");
         addOption("No 2nd Fish for Cat", getSettings().game.no2ndFishForCat,
             "Skip needing to catch a second fish for Sera's cat.");
+        addOption("Keep Caught Fish", getSettings().game.keepFish,
+            "Allows Link to keep the fish he catches while fishing. This makes it easier "
+            "to get fishing records as all the fish in a certain area can be caught "
+            "(they respawn once the area is reloaded).<br/>"
+            "To allow Link to obtain the Reekfish scent, Reekfish disappear once they get back "
+            "into the water instead of when they are caught.");
         addSpeedrunDisabledOption("Sun's Song (R+X)", getSettings().game.sunsSong,
             "Allows Wolf Link to howl and change the time of day.");
         addOption("Quick Transform (R+Y)", getSettings().game.enableQuickTransform,
