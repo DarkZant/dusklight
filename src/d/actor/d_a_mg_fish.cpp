@@ -47,16 +47,16 @@
 #define ACTION_MG_FISH_MF_ESA_CATCH 72
 
 #define GEDOU_KIND_LM_1 0 // Hyrule Bass (Lure)
-#define GEDOU_KIND_RI_1 1
+#define GEDOU_KIND_RI_1 1 // Hylian Loach (Lure)
 #define GEDOU_KIND_NP_1 2 // Hylian Pike (Lure)
-#define GEDOU_KIND_CF_1 3
-#define GEDOU_KIND_KS_1 4
+#define GEDOU_KIND_CF_1 3 // Ordon Catfish (Lure)
+#define GEDOU_KIND_KS_1 4 // Reekfish (Lure) (Seems to be unused)
 #define GEDOU_KIND_BG 5   // Greengill (Bobber)
-#define GEDOU_KIND_LM_2 6
-#define GEDOU_KIND_RI_2 7
-#define GEDOU_KIND_NP_2 8
-#define GEDOU_KIND_CF_2 9
-#define GEDOU_KIND_KS_2 10 // Reekfish
+#define GEDOU_KIND_LM_2 6 // Hyrule Bass (Bobber)
+#define GEDOU_KIND_RI_2 7 // Hylian Loach (Bobber)
+#define GEDOU_KIND_NP_2 8 // Hylian Pike (Bobber)
+#define GEDOU_KIND_CF_2 9 // Ordon Catfish (Bobber)
+#define GEDOU_KIND_KS_2 10 // Reekfish (Bobber)
 #define GEDOU_KIND_BT 20
 #define GEDOU_KIND_LH 21
 #define GEDOU_KIND_SP 22
@@ -3793,18 +3793,20 @@ static int daMg_Fish_Create(fopAc_ac_c* i_this) {
             } // mCyl
         }
     };
-    static f32 fish_max[11] = { // Max fish sizes
-        0.828f,
-        0.998f,
-        0.998f,
-        0.998f,
-        0.708f,
-        0.428f,
-        0.448f,
-        0.588f,
-        0.588f,
-        0.548f, // Reekfish
-        0.708f,
+    static f32 fish_max[11] = { // Max fish sizes. They are floored to the nearest int when used in game.
+        // Lure fishing
+        0.828f, // Hyrule Bass: 0.828 * 100 cm = 82.8 cm | 82.8 cm / 2.54 = 32.59 in
+        0.998f, // Hylian Loach: 0.998 * 100 cm = 99.8 cm | 99.8 cm / 2.54 = 39.29 in
+        0.998f, // Hylian Pike: 0.998 * 100 cm = 99.8 cm | 99.8 cm / 2.54 = 39.29 in
+        0.998f, // Ordon Catfish: 0.998 * 100 cm = 99.8 cm | 99.8 cm / 2.54 = 39.29 in
+        0.708f, // Reekfish (Unused)
+        // Bobber fishing
+        0.428f, // Greengill: 0.428 * 100 cm = 42.8 cm | 42.8 cm / 2.54 = 16.85 in
+        0.448f, // Hyrule Bass: 0.448 * 100 cm = 44.8 cm | 44.8 cm / 2.54 = 17.63 in
+        0.588f, // Hylian Loach: 0.588 * 100 cm = 58.8 cm | 58.8 cm / 2.54 = 23.14 in
+        0.588f, // Hylian Pike: 0.588 * 100 cm = 58.8 cm | 58.8 cm / 2.54 = 23.14 in
+        0.548f, // Ordon Catfish: 0.548 * 100 cm = 54.8 cm | 54.8 cm / 2.54 = 21.57 in
+        0.708f, // Reekfish: 0.708 * 100 cm = 70.8 cm | 70.8 cm / 2.54 = 27.87 in 
     };
 
     fopAcM_ct(i_this, mg_fish_class);
