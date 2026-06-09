@@ -57,6 +57,14 @@ enum class MenuScaling : u8 {
     Dusklight = 2,
 };
 
+enum class MagicArmorMode : u8 {
+    NORMAL = 0,
+    ON_DAMAGE = 1,
+    DOUBLE_DEFENSE = 2,
+    INVINCIBLE = 3,
+    COSMETIC = 4,
+};
+
 namespace config {
 template <>
 struct ConfigEnumRange<BloomMode> {
@@ -104,6 +112,12 @@ template <>
 struct ConfigEnumRange<MenuScaling> {
     static constexpr auto min = MenuScaling::GameCube;
     static constexpr auto max = MenuScaling::Dusklight;
+};
+
+template <>
+struct ConfigEnumRange<MagicArmorMode> {
+    static constexpr auto min = MagicArmorMode::NORMAL;
+    static constexpr auto max = MagicArmorMode::COSMETIC;
 };
 }  // namespace config
 
@@ -163,6 +177,7 @@ struct UserSettings {
         // Preferences
         ConfigVar<bool> enableMirrorMode;
         ConfigVar<bool> minimalHUD;
+        ConfigVar<float> hudScale;
         ConfigVar<bool> pauseOnFocusLost;
         ConfigVar<bool> enableLinkDollRotation;
         ConfigVar<bool> enableAchievementToasts;
@@ -233,7 +248,7 @@ struct UserSettings {
         ConfigVar<bool> canTransformAnywhere;
         ConfigVar<bool> fastRoll;
         ConfigVar<bool> fastSpinner;
-        ConfigVar<bool> freeMagicArmor;
+        ConfigVar<MagicArmorMode> armorRupeeDrain;
         ConfigVar<bool> invincibleEnemies;
 
         // Technical
