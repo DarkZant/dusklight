@@ -56,7 +56,7 @@
 #define GEDOU_KIND_RI_2 7 // Hylian Loach (Bobber)
 #define GEDOU_KIND_NP_2 8 // Hylian Pike (Bobber)
 #define GEDOU_KIND_CF_2 9 // Ordon Catfish (Bobber)
-#define GEDOU_KIND_KS_2 10 // Reekfish (Bobber)
+#define GEDOU_KIND_KS_2 10 // Reekfish (Bobber) 
 #define GEDOU_KIND_BT 20
 #define GEDOU_KIND_LH 21
 #define GEDOU_KIND_SP 22
@@ -65,12 +65,12 @@
 #define GEDOU_KIND_KN 25
 #define GEDOU_KIND_ED 26
 #define GEDOU_KIND_SY 27
-
+// Returns the adress for the lure fishing size records. The 4 values are the fish kinds.
 static u16 check_kind[4] = {
-    0xF57F,
-    0xF47F,
-    0xF37F,
-    0xF27F,
+    0xF57F, // Hyrule Bass
+    0xF47F, // Hylian Loach
+    0xF37F, // Hylian Pike
+    0xF27F, // Ordon Catfish
 };
 
 struct PathNode {
@@ -212,6 +212,7 @@ static void* s_bait_sub(void* a, void* b) {
     }
     return NULL;
 }
+// 0 = centimeters (cm), 1 = inches (in), 2 = cm but PAL english
 static u8 lit_1008;
 static u8 lit_1007;
 
@@ -1778,6 +1779,7 @@ static void mf_hit(mg_fish_class* i_this) {
     if (l_HIO.field_0x19 != 0) {
         didCatch = true;
     }
+    // Conditions for the Land action to appear when reeling in a fish
     if (i_this->mDistToPlayer < 200.0f &&
         i_this->actor.current.pos.y > i_this->mSurfaceY - 50.0f * i_this->mJointScale)
     {
@@ -3793,7 +3795,8 @@ static int daMg_Fish_Create(fopAc_ac_c* i_this) {
             } // mCyl
         }
     };
-    static f32 fish_max[11] = { // Max fish sizes. They are floored to the nearest int when used in game.
+    // Max fish sizes in meters (m). They are floored to the nearest int when used in game. 
+    static f32 fish_max[11] = { 
         // Lure fishing
         0.828f, // Hyrule Bass: 0.828 * 100 cm = 82.8 cm | 82.8 cm / 2.54 = 32.59 in
         0.998f, // Hylian Loach: 0.998 * 100 cm = 99.8 cm | 99.8 cm / 2.54 = 39.29 in
@@ -3812,7 +3815,7 @@ static int daMg_Fish_Create(fopAc_ac_c* i_this) {
     fopAcM_ct(i_this, mg_fish_class);
 
     mg_fish_class* a_this = (mg_fish_class*)i_this;
-
+    // First byte of params is the fish kind (because mGedouKind is u8)
     a_this->mGedouKind = fopAcM_GetParam(i_this);
 
     bool flag1 = false;
@@ -3862,7 +3865,7 @@ static int daMg_Fish_Create(fopAc_ac_c* i_this) {
     } else if (a_this->mGedouKind == GEDOU_KIND_O_GD_BOTT) {
         a_this->mResName = "O_gD_bott";
     }
-
+// lit_1008: 0 = centimeters (cm), 1 = inches (in), 2 = cm but PAL english
 #if TARGET_PC
     if (dusk::version::isRegionJpn()) {
         lit_1008 = 0;
@@ -3897,7 +3900,7 @@ static int daMg_Fish_Create(fopAc_ac_c* i_this) {
         {
             return cPhs_ERROR_e;
         }
-
+        // Junk and treasure (everything that is not fish)
         if (a_this->mGedouKind == GEDOU_KIND_BT ||
             a_this->mGedouKind == GEDOU_KIND_SP ||
             a_this->mGedouKind == GEDOU_KIND_BB ||
@@ -3907,11 +3910,13 @@ static int daMg_Fish_Create(fopAc_ac_c* i_this) {
             a_this->mGedouKind == GEDOU_KIND_ED ||
             a_this->mGedouKind == GEDOU_KIND_SY)
         {
-            s32 params_2 = fopAcM_GetParam(i_this) >> 8 & 0xff;
-            if (params_2 == 0xff) {
-                params_2 = 0x1e;
+            // Fish size in cm that was passed as a parameter when creating the fish.
+            // Potentially useless since treasure and junk always have the same size.
+            s32 params_2 = fopAcM_GetParam(i_this) >> 8 & 0xff; // [37, 71]
+            if (params_2 == 0xff) { // If 255
+                params_2 = 0x1e; // Set to 30
             }
-            a_this->mJointScale = params_2 * 100;
+            a_this->mJointScale = params_2 * 100; // [3700, 7100]
             heapSize = 0x3000;
             if (a_this->mGedouKind == GEDOU_KIND_BT) {
                 heapSize = 0x800;
@@ -3951,77 +3956,85 @@ static int daMg_Fish_Create(fopAc_ac_c* i_this) {
         fopAcM_SetMax(i_this, 200.0f, 200.0f, 200.0f);
         a_this->mAcch.Set(&i_this->current.pos, &i_this->old.pos, i_this, 1, &a_this->mAcchCir,
             &i_this->speed, NULL, NULL);
+        // Number of fish caught with the sinking lure (max 31). This value gets lowered by 1 everytime you pay to fish at the Fishing Hole, until it is 0.
         a_this->field_0xc44 = dComIfGs_getEventReg(0xf11f);
-        a_this->mJointScale = 0.0001f + (fopAcM_GetParam(i_this) >> 8 & 0xff) * 0.01f;
-        if (a_this->mGedouKind >= GEDOU_KIND_BG) {
-            f32 fishMaxSize;
-            if (lit_1008 == 1) {
-                fishMaxSize = dComIfGs_getFishSize(a_this->mKind2) * 2.54f;
+        // (fopAcM_GetParam(i_this) >> 8 & 0xff) = Second byte from the left: Fish size in cm that was passed as a parameter when creating the fish
+        // For lure fishing, the values are in [37, 71]. This isn't used for bobber fishing.
+        a_this->mJointScale = 0.0001f + (fopAcM_GetParam(i_this) >> 8 & 0xff) * 0.01f; // [37, 71] * 0.01 -> 0.0001 + [0.37, 0.71] -> [0.3701, 0.7101]
+        if (a_this->mGedouKind >= GEDOU_KIND_BG) { // Size for bobber fishing
+            // Saved maxed size in cm (Record in fishing journal)
+            f32 fishMaxSize; 
+            if (lit_1008 == 1) { // If region is USA
+                fishMaxSize = dComIfGs_getFishSize(a_this->mKind2) * 2.54f; // Convert inches to cm
             } else {
-                fishMaxSize = dComIfGs_getFishSize(a_this->mKind2);
+                fishMaxSize = dComIfGs_getFishSize(a_this->mKind2); // cm
             }
-            if (fishMaxSize > 0.1f) {
-                if (lit_1008 != 0) {
-                    a_this->mJointScale = fishMaxSize * 0.01f + cM_rndFX(0.05334f);
+            if (fishMaxSize > 0.1f) { // If a max size is registered for this kind of fish (all fish caught are bigger than 0.1 cm)
+                // Using 26 cm as the smallest size because the smallest record you can have is a 26 cm Greengill. Actual ranges depend on the fish kind.
+                if (lit_1008 != 0) {  // If USA or PAL English.
+                    a_this->mJointScale = fishMaxSize * 0.01f + cM_rndFX(0.05334f); // Record in meters + [-2.1, 2.1] inches
                 } else {
-                    a_this->mJointScale = fishMaxSize * 0.01f + cM_rndFX(0.021f);
+                    a_this->mJointScale = fishMaxSize * 0.01f + cM_rndFX(0.021f); // Record in meters + [-2.1, 2.1] cm
                 }
-            } else {
-                a_this->mJointScale = cM_rndFX(0.02f) + 0.28f;
-                if (a_this->mGedouKind != GEDOU_KIND_BG) {
-                    if (a_this->mGedouKind == GEDOU_KIND_LM_2) {
-                        a_this->mJointScale += 0.04f;
-                    } else if (a_this->mGedouKind == GEDOU_KIND_KS_2) {
-                        a_this->mJointScale = cM_rndFX(0.039f) + 0.67f;
-                    } else if (a_this->mGedouKind == GEDOU_KIND_CF_2) {
-                        a_this->mJointScale += 0.1f;
-                    } else {
-                        a_this->mJointScale += 0.1f;
+            } else { // If no fish of this kind have been caught before
+                a_this->mJointScale = cM_rndFX(0.02f) + 0.28f; // [0.28 - 0.02, 0.28 + 0.02] = [0.26, 0.3] m = [10.2, 11.8] in
+                if (a_this->mGedouKind != GEDOU_KIND_BG) { // If not Greengill
+                    if (a_this->mGedouKind == GEDOU_KIND_LM_2) { // Hyrule Bass
+                        a_this->mJointScale += 0.04f; // [0.26 + 0.04, 0.3 + 0.04] = [0.3, 0.34] m = [11.8, 13,4] in
+                    } else if (a_this->mGedouKind == GEDOU_KIND_KS_2) { // Reekfish
+                        a_this->mJointScale = cM_rndFX(0.039f) + 0.67f; // [0.67 - 0.039, 0.67 + 0.039] = [0.631, 0.709] m = [24.8, 27.9] in
+                    } else if (a_this->mGedouKind == GEDOU_KIND_CF_2) { // Ordon Catfish
+                        a_this->mJointScale += 0.1f; // [0.26 + 0.1, 0.3 + 0.1] = [0.36, 0.4] m = [14.2, 15.7] in
+                    } else { // Hylian Pike or Hylian Loach
+                        a_this->mJointScale += 0.1f; // [0.26 + 0.1, 0.3 + 0.1] = [0.36, 0.4] m = [14.2, 15.7] in
                     }
                 }
             }
-        } else {
-            if (a_this->mGedouKind <= GEDOU_KIND_CF_1) {
-                f32 jointScale = 100.0f * a_this->mJointScale;
+        } else { // Size for lure fishing
+            if (a_this->mGedouKind <= GEDOU_KIND_CF_1) { // Ordon Catfish and below, useless since the outside else already covers these cases
+                // Current joint scale passed as a parameter in cm: 100 * [0.3701, 0.7101] = [37.01, 71.01] cm
+                f32 jointScale = 100.0f * a_this->mJointScale; 
+                // Fishing hole size records, in centimeters
                 f32 fVar1 =
-                    lit_1008 == 1 ?
-                        dComIfGs_getEventReg(check_kind[a_this->mGedouKind << 0]) * 2.54f :
-                        dComIfGs_getEventReg(check_kind[a_this->mGedouKind << 0]);
-                if ((s32)jointScale <= (s32)fVar1) {
-                    a_this->mJointScale = fVar1 * 0.01f;
-                    f32 fVar2 = 0.05f;
-                    if (a_this->mGedouKind == GEDOU_KIND_RI_1) {
-                        fVar2 = 0.15f;
-                    } else if (fVar1 >= 0.6f) {
-                        fVar2 = 0.03f;
+                    lit_1008 == 1 ? // If version is USA
+                        // The << 0 bit shifts are useless
+                        dComIfGs_getEventReg(check_kind[a_this->mGedouKind << 0]) * 2.54f : // Convert inches to cm
+                        dComIfGs_getEventReg(check_kind[a_this->mGedouKind << 0]);          // cm
+                 if ((s32)jointScale <= (s32)fVar1) { // If the joint scale is smaller or equal to the size record (max of 99 cm)
+                    a_this->mJointScale = fVar1 * 0.01f; // Record divided by 100: [0.4, 0.998] = [Min record size, Max record size]
+                    f32 fVar2 = 0.05f; // 5%
+                    if (a_this->mGedouKind == GEDOU_KIND_RI_1) { // If Hylian Loach
+                        fVar2 = 0.15f; // 15%
+                    } else if (fVar1 >= 0.6f) { // Else if record is more or equal to 0.6 = 60 cm = 23 in
+                        fVar2 = 0.03f; // 3%
                     }
-                    if (cM_rndF(1.0f) < fVar2) {
-                        if (lit_1008 != 0) {
-                            a_this->mJointScale += 0.028194f;
+                    if (cM_rndF(1.0f) < fVar2) { // If random call in [0, 1] is smaller than fVar2 (which is a probability), the fish is bigger than the record
+                        if (lit_1008 != 0) { // If inches or PAL english (cm)
+                            a_this->mJointScale += 0.028194f; // Record in meters + 1.11 in
                         } else {
-                            a_this->mJointScale += 0.0111f;
+                            a_this->mJointScale += 0.0111f; // Record in meters + 1.11 cm
                         }
-                    } else if (a_this->mGedouKind == GEDOU_KIND_RI_1) {
-                        a_this->mJointScale *= 1.0f - cM_rndF(0.1f);
-                    } else {
-                        a_this->mJointScale *= 1.0f - cM_rndF(0.3f);
+                    } else if (a_this->mGedouKind == GEDOU_KIND_RI_1) { // Else if Hylian Loach (Min Size is 71 cm)
+                        a_this->mJointScale *= 1.0f - cM_rndF(0.1f); // [0.71, 0.998] * [0.9, 1] = [0.639, 0.998]
+                    } else { // If it's not bigger than the record, it's smaller or equal
+                        a_this->mJointScale *= 1.0f - cM_rndF(0.3f); // [0.4, 0.998] * [0.7, 1] = [0.28, 0.998]
                     }
                     if (a_this->field_0xc44 >= 20 ||
                         (a_this->mGedouKind != GEDOU_KIND_RI_1 && cM_rndF(1.0f) < 0.2f))
-                    {
+                    {  // If nb fish caught with sinking lure >= 20 or (not Hylian Loach and 20% random call), the fish is 20% smaller
                         a_this->mJointScale *= 0.8f;
-                    } else if (a_this->field_0xc44 >= 10) {
-                        a_this->mJointScale *= 0.85f;
-                    } else if (a_this->field_0xc44 >= 5) {
+                    } else if (a_this->field_0xc44 >= 10) { // Else if nb fish caught with sinking lure >= 10, the fish is 15% smaller
+                        a_this->mJointScale *= 0.85f; 
+                    } else if (a_this->field_0xc44 >= 5) { // Else if nb fish caught with sinking lure >= 5, the fish is 10% smaller
                         a_this->mJointScale *= 0.9f;
                     }
-                }
-                if (a_this->mJointScale < 0.42f) {
-                    a_this->mJointScale = cM_rndF(0.05f) + 0.4f;
-                }
+                 }
+                 if (a_this->mJointScale < 0.42f) { // If joint scale < 0.42, the size is set to a minimum
+                     a_this->mJointScale = cM_rndF(0.05f) + 0.4f; // [0, 0.05] + 0.4 = [0.4, 0.45] m = [40, 45] cm = [15, 17] in
+                 }
             }
         }
-        if (a_this->mJointScale > fish_max[a_this->mGedouKind]) {
+        if (a_this->mJointScale > fish_max[a_this->mGedouKind]) { // Making sure the fish sizes don't go beyond the max fish sizes array
             a_this->mJointScale = fish_max[a_this->mGedouKind];
         }
         a_this->mAcchCir.SetWall(3.0f * a_this->mJointScale, 30.0f * a_this->mJointScale);
@@ -4054,17 +4067,17 @@ static int daMg_Fish_Create(fopAc_ac_c* i_this) {
         i_this->current.angle.y = newYaw;
         i_this->shape_angle.y = newYaw;
         a_this->mMovementYaw = newYaw;
-        if (strcmp(dComIfGp_getStartStageName(), "R_SP127") == 0) {
+        if (strcmp(dComIfGp_getStartStageName(), "R_SP127") == 0) { // Inside Fishing Hut
             a_this->mSurfaceY = 200.0f;
             a_this->mGroundY = 60.0f;
             i_this->current.pos.set(cM_rndFX(30.0f) + -720.0f, cM_rndF(30.0f) + 110.0f,
                                     cM_rndFX(180.0f) + 70.0f);
-            if (a_this->mGedouKind == GEDOU_KIND_RI_1) {
+            if (a_this->mGedouKind == GEDOU_KIND_RI_1) { // If Hylian Loach (Lure)
                 a_this->mCurAction = ACTION_MG_FISH_RI_AQUA;
             } else {
                 a_this->mCurAction = ACTION_MG_FISH_MF_AQUA;
-                if (a_this->mGedouKind == GEDOU_KIND_BG) {
-                    a_this->mJointScale = cM_rndFX(0.03f) + 0.25f;
+                if (a_this->mGedouKind == GEDOU_KIND_BG) { // If Greengill (the ones in the tank)
+                    a_this->mJointScale = cM_rndFX(0.03f) + 0.25f; // [0, 0.03] + 0.25 = [0.25, 0.28] = [25, 28] cm = [9, 11] in
                 }
             }
             a_this->mActionPhase = 0;

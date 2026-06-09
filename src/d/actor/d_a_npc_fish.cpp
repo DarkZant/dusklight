@@ -67,7 +67,13 @@ static fish_data_s fish_d127_S[49] = {
     {8, {-4600.f, -80.f, 3100.f}, 0}, {7, {3616.f, -80.f, -4739.f}, 0},
     {-1, {0.f, 0.f, 0.f}, 0},
 };
-
+// Fish data for the fishes in the Fishing Hole
+// {Fish Kind (mGedouKind), Position, Size in centimeters}
+// Values for the different kinds:
+// 0: Hyrule Bass
+// 1: Hylian Loach
+// 2: Hylian Pike
+// 3: Ordon Catfish
 static fish_data_s fish_d127[56] = {
     {0, {-4605.0f, -80.f, 3526.f}, 45},     {0, {-5300.0f, -80.0f, 2875.0f}, 46},
     {0, {-7163.0f, -80.0f, 4140.0f}, 47},   {0, {-8161.0f, -80.0f, 4235.0f}, 44},
@@ -96,7 +102,8 @@ static fish_data_s fish_d127[56] = {
     {3, {-1317.0f, -80.0f, 2515.0f}, 63},   {0, {-9391.0f, -637.0f, 386.0f}, 51},
     {0, {-9057.0f, -675.0f, -770.0f}, 52},  {0, {-5562.0f, -675.0f, -2115.0f}, 53},
     {0, {-3837.0f, -546.0f, -2871.0f}, 51}, {0, {-328.0f, -955.0f, 1600.0f}, 52},
-    {0, {-2689.0f, -901.0f, -126.0f}, 53},  {-1, {0.0f, 0.0f, 0.0f}, 0}};
+    {0, {-2689.0f, -901.0f, -126.0f}, 53},  {-1, {0.0f, 0.0f, 0.0f}, 0}
+};
 
 
 static fish_pos lf_pos[12] = {
@@ -108,7 +115,7 @@ static fish_pos lf_pos[12] = {
 static int daNpc_Fish_Create(fopAc_ac_c* i_this) {
     cXyz pos;
     fopAcM_ct(i_this, npc_fish_class);
-    if (strcmp(dComIfGp_getStartStageName(), "F_SP127")) {
+    if (strcmp(dComIfGp_getStartStageName(), "F_SP127")) { // If not in Fishing Hole
         return 5;
     } else {
         dScnKy_env_light_c* envLight = dKy_getEnvlight();
