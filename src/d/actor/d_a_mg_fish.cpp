@@ -46,17 +46,28 @@
 #define ACTION_MG_FISH_MF_ESA_HIT 71
 #define ACTION_MG_FISH_MF_ESA_CATCH 72
 
-#define GEDOU_KIND_LM_1 0 // Hyrule Bass (Lure)
-#define GEDOU_KIND_RI_1 1 // Hylian Loach (Lure)
-#define GEDOU_KIND_NP_1 2 // Hylian Pike (Lure)
-#define GEDOU_KIND_CF_1 3 // Ordon Catfish (Lure)
-#define GEDOU_KIND_KS_1 4 // Reekfish (Lure) (Seems to be unused)
-#define GEDOU_KIND_BG 5   // Greengill (Bobber)
-#define GEDOU_KIND_LM_2 6 // Hyrule Bass (Bobber)
-#define GEDOU_KIND_RI_2 7 // Hylian Loach (Bobber)
-#define GEDOU_KIND_NP_2 8 // Hylian Pike (Bobber)
-#define GEDOU_KIND_CF_2 9 // Ordon Catfish (Bobber)
-#define GEDOU_KIND_KS_2 10 // Reekfish (Bobber) 
+// Hyrule Bass (Lure)
+#define GEDOU_KIND_LM_1 0 
+// Hylian Loach (Lure)
+#define GEDOU_KIND_RI_1 1 
+// Hylian Pike (Lure)
+#define GEDOU_KIND_NP_1 2 
+// Ordon Catfish (Lure)
+#define GEDOU_KIND_CF_1 3 
+// Reekfish (Lure) (Seems to be unused)
+#define GEDOU_KIND_KS_1 4 
+// Greengill (Bobber)
+#define GEDOU_KIND_BG 5   
+// Hyrule Bass (Bobber)
+#define GEDOU_KIND_LM_2 6 
+// Hylian Loach (Bobber)
+#define GEDOU_KIND_RI_2 7 
+// Hylian Pike (Bobber)
+#define GEDOU_KIND_NP_2 8 
+ // Ordon Catfish (Bobber)
+#define GEDOU_KIND_CF_2 9
+// Reekfish (Bobber)
+#define GEDOU_KIND_KS_2 10 
 #define GEDOU_KIND_BT 20
 #define GEDOU_KIND_LH 21
 #define GEDOU_KIND_SP 22
@@ -65,7 +76,7 @@
 #define GEDOU_KIND_KN 25
 #define GEDOU_KIND_ED 26
 #define GEDOU_KIND_SY 27
-// Returns the adress for the lure fishing size records. The 4 values are the fish kinds.
+// Returns the address for the lure fishing size records. The 4 values are the fish kinds.
 static u16 check_kind[4] = {
     0xF57F, // Hyrule Bass
     0xF47F, // Hylian Loach
@@ -229,13 +240,13 @@ static void* s_other_search_sub(void* a, void* b) {
     }
     return NULL;
 }
-
+// Determines if the fish swims towards the lure/hook. param_2 is the rod type: 0 = Lure, 1 = Bobber
 static s32 search_lure(mg_fish_class* i_this, int param_2) {
     static u8 learn_d[5] = {
         0x01, 0x02, 0x04, 0x08, 0x10,
     };
 
-    if (param_2 == 0) {
+    if (param_2 == 0) { // If lure fishing
         fopAc_ac_c* rod_actor = (fopAc_ac_c*)fpcM_Search(s_lure_sub, i_this);
         if (rod_actor != NULL) {
             dmg_rod_class* rod = (dmg_rod_class*)rod_actor;
@@ -243,20 +254,20 @@ static s32 search_lure(mg_fish_class* i_this, int param_2) {
             fpcM_Search(s_other_search_sub, i_this);
             if (s_fish_ct <= 1) {
                 f32 fVar1 = i_this->field_0x5ec;
-                if (rod->lure_type == MG_LURE_SP) {
+                if (rod->lure_type == MG_LURE_SP) { // If sinking lure
                     fVar1 = 1000.0f;
                 } else {
                     if (rod->field_0x1009 != 0) {
                         fVar1 *= 1.5f;
                     }
-                    if (s_fish_ct > 0 && i_this->mGedouKind != GEDOU_KIND_CF_1) {
+                    if (s_fish_ct > 0 && i_this->mGedouKind != GEDOU_KIND_CF_1) { // Not Ordon Catfish
                         fVar1 *= 0.5f;
                     }
                 }
                 if (i_this->field_0xc44 >= 0x14) {
                     fVar1 *= 0.5f;
                 }
-                if (i_this->mGedouKind != GEDOU_KIND_CF_1 &&
+                if (i_this->mGedouKind != GEDOU_KIND_CF_1 && // Not Ordon Catfish && not sinking lure
                     rod->lure_type != MG_LURE_SP &&
                     (i_this->field_0x750 & learn_d[rod->lure_type]) != 0)
                 {
@@ -271,13 +282,14 @@ static s32 search_lure(mg_fish_class* i_this, int param_2) {
                 }
             }
         }
-    } else if (param_2 == 1) {
+    } else if (param_2 == 1) { // If bobber fishing
         fopAc_ac_c* rod_actor = (fopAc_ac_c*)fpcM_Search(s_esa_sub, i_this);
         if (rod_actor != NULL) {
             dmg_rod_class* rod = (dmg_rod_class*)rod_actor;
-            if (i_this->mGedouKind == GEDOU_KIND_KS_2 && rod->hook_kind != 1) {
-                return -1;
+            if (i_this->mGedouKind == GEDOU_KIND_KS_2 && rod->hook_kind != 1) { // If Reekfish and not Coral Earring
+                return -1; // Ignore the rod
             }
+            // If Greengill or Coral Earring or Bee Larva/Worm and the bobber is in the water
             if ((i_this->mGedouKind == GEDOU_KIND_BG || rod->hook_kind == 1 || rod->esa_kind != 0) &&
                 rod->actor.current.pos.y < i_this->mSurfaceY - 60.0f)
             {
@@ -285,8 +297,8 @@ static s32 search_lure(mg_fish_class* i_this, int param_2) {
                 f32 distX = rod->actor.current.pos.x - i_this->actor.current.pos.x;
                 f32 distZ = rod->actor.current.pos.z - i_this->actor.current.pos.z;
                 f32 latDist = JMAFastSqrt(distX * distX + distZ * distZ);
-                if (latDist < maxLatDist) {
-                    return fopAcM_GetID(rod);
+                if (latDist < maxLatDist) { // If distance to hook is small enough
+                    return fopAcM_GetID(rod); // Go towards the hook
                 }
             }
         }
@@ -2234,7 +2246,7 @@ static void mf_catch(mg_fish_class* i_this) {
         pota_set(i_this);
     }
 }
-
+// Bobber fishing hook search
 static void mf_esa_search(mg_fish_class* i_this) {
     s32 flag1 = 0;
     s32 flag2 = 0;
@@ -2298,24 +2310,26 @@ static void mf_esa_search(mg_fish_class* i_this) {
             i_this->mMaxStep = 0;
             if (i_this->field_0x624[0] == 0) {
                 rod->mg_fish_id = fopAcM_GetID(i_this);
-                f32 fVar10 = 0.5f;
-                if (dComIfGs_getFishNum(5) <= 5) {
-                    fVar10 = 1.5f;
+                // Probability that the fish bites the hook, allowing it to be caught
+                f32 fVar10 = 0.5f; // 17.5%
+                // If the amount of Greengill caught <= 5 (Probably to help with Sera's cat)
+                if (dComIfGs_getFishNum(5) <= 5) { 
+                    fVar10 = 1.5f; // 52.5%
                 }
-                if (i_this->mGedouKind != GEDOU_KIND_BG) {
-                    if (rod->hook_kind == 1) {
-                        fVar10 = 1.0f;
+                if (i_this->mGedouKind != GEDOU_KIND_BG) { // If not Greengill
+                    if (rod->hook_kind == 1) { // If Coral Earring
+                        fVar10 = 1.0f; // 35 %
                     }
-                    if (rod->esa_kind == 1) {
-                        fVar10 *= 1.5f;
-                    } else if (rod->esa_kind == 2) {
-                        fVar10 *= 2.0f;
+                    if (rod->esa_kind == 1) { // If Bee Larva
+                        fVar10 *= 1.5f; // Current percent *= 1.5
+                    } else if (rod->esa_kind == 2) { // If Worm
+                        fVar10 *= 2.0f; // Current percent *= 2
                     }
                 }
-                if (fVar10 > 2.5f) {
-                    fVar10 = 2.5f;
+                if (fVar10 > 2.5f) { // Set max probability to 2.5
+                    fVar10 = 2.5f; // 87.5%
                 }
-                if (cM_rndF(1.0f) < fVar10 * 0.35f ||
+                if (cM_rndF(1.0f) < fVar10 * 0.35f || // If random call in [0, 1] is under fVar10 * 0.35 = %
                     i_this->field_0x5ec > 10000.0f) {
                     i_this->mActionPhase = 3;
                     i_this->mMovementPitch = i_this->mMovementPitch + 0x2000;
@@ -2326,7 +2340,7 @@ static void mf_esa_search(mg_fish_class* i_this) {
                     rod->field_0x10a5 = fVar10 * (cM_rndF(15.0f) + 15.0f);
                     i_this->field_0x659 = rod->field_0x10a5;
                     i_this->field_0x650 = 0.0f;
-                    if (rod->hook_kind == 0 && rod->esa_kind == 0) {
+                    if (rod->hook_kind == 0 && rod->esa_kind == 0) { // If base hook and no bait
                         i_this->field_0x624[0] = cM_rndF(80.0f) + 50.0f;
                     } else {
                         i_this->field_0x624[0] = cM_rndF(20.0f) + 30.0f;
