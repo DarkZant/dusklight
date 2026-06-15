@@ -14,11 +14,11 @@
 class npc_fish_class : public fopAc_ac_c {
     /* 0x568 */ u8 field_0x568[0x5b4 - 0x568]; // unused in TU, unsure of type 
 };
-
+// {int: Fish Kind (mGedouKind), Vec: Position, u8: Size in centimeters}
 struct fish_data_s {
-    /* 0x00 */ int param;
-    /* 0x04 */ Vec pos;
-    /* 0x10 */ u8 field_0x10;
+    /* 0x00 */ int param; // Fish kind (mGedouKind)
+    /* 0x04 */ Vec pos;  // Position
+    /* 0x10 */ u8 field_0x10; // Size in centimeters
 };
 
 struct fish_pos {

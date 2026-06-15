@@ -830,6 +830,7 @@ inline const MultiBitEventFlag duskImguiU8Events[] = {
     { 0xf3, "Hylian Pike size record in Fishing Hole (in cm)" },
     { 0xf4, "Hylian Loach size record in Fishing Hole (in cm)" },
     { 0xf5, "Hyrule Bass size record in Fishing Hole (in cm)" },
+    { 0xf1, "Number of fish caught with the Sinking Lure"},
     { 0xf6, "Number of Rollgoal Levels beaten" },
 };
 
