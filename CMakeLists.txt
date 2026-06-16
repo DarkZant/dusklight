@@ -5,7 +5,7 @@ if (NOT CMAKE_BUILD_TYPE)
             "Build type options: Debug Release RelWithDebInfo MinSizeRel" FORCE)
 endif ()
 
-set(DUSK_VERSION_OVERRIDE "" CACHE STRING "Override version string (skips git detection and format validation)")
+set(DUSK_VERSION_OVERRIDE "DarkZant Edition" CACHE STRING "Override version string (skips git detection and format validation)")
 
 if (DUSK_VERSION_OVERRIDE)
     set(DUSK_WC_DESCRIBE "${DUSK_VERSION_OVERRIDE}")

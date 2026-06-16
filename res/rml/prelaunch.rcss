@@ -190,9 +190,16 @@ version-info {
     flex-direction: column;
     gap: 12dp;
     text-align: right;
-    font-size: 24dp;
-    font-effect: glow(0dp 4dp 0dp 4dp black);
+    font-size: 32dp;
+    font-effect: shadow(5vw 5vh black);
     text-align: right;
+    font-family: "Alegreya SC";    
+}
+
+@media (min-width: 1216dp) {
+    version-info span {
+      font-size: 4vw;
+    }
 }
 
 body.mirrored version-info {

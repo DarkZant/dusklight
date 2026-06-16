@@ -57,8 +57,10 @@ const Rml::String kDocumentSource = R"RML(
             <span id="disc-version" class="detail" />
         </disc-info>
         <version-info class="intro-item delay-5">
-            <div class="version">Version <span id="version-text"></span></div>
-            <div id="update-status" class="update">
+            <div class="version" style="color: #FFD700;">
+                <span id="version-text"></span>
+            </div>
+            <div id="update-status" class="update" style="visibility: hidden;">
                 <span id="update-message"></span>
                 <button id="update-download">
                     <span id="update-download-label"></span>
