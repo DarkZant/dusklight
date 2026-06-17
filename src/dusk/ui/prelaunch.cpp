@@ -57,10 +57,13 @@ const Rml::String kDocumentSource = R"RML(
             <span id="disc-version" class="detail" />
         </disc-info>
         <version-info class="intro-item delay-5">
+            <div id="git-version">
+                Dusklight v<span id="version-num"></span>
+            </div>
             <div class="version" style="color: #FFD700;">
                 <span id="version-text"></span>
             </div>
-            <div id="update-status" class="update" style="visibility: hidden;">
+            <div id="update-status" class="update" style="visibility: hidden;" t>
                 <span id="update-message"></span>
                 <button id="update-download">
                     <span id="update-download-label"></span>
@@ -736,6 +739,7 @@ Prelaunch::Prelaunch() : Document(kDocumentSource), mRoot(mDocument->GetElementB
     mDiscStatus = mDocument->GetElementById("disc-status");
     mDiscDetail = mDocument->GetElementById("disc-version");
     mVersion = mDocument->GetElementById("version-text");
+    mVersionNum = mDocument->GetElementById("version-num");
     mUpdateStatus = mDocument->GetElementById("update-status");
     mUpdateMessage = mDocument->GetElementById("update-message");
     mUpdateDownload = mDocument->GetElementById("update-download");
@@ -890,6 +894,15 @@ void Prelaunch::update() {
             versionStr = versionStr.substr(1);
         }
         mVersion->SetInnerRML(escape(versionStr));
+    }
+    if (mVersionNum != nullptr) {
+        std::string_view versionNumStr(DUSK_VERSION_STRING);
+
+        size_t lastDot = versionNumStr.find_last_of('.');
+        if (lastDot != std::string_view::npos) 
+            versionNumStr = versionNumStr.substr(0, lastDot);
+
+        mVersionNum->SetInnerRML(escape(versionNumStr));
     }
     if (mUpdateStatus != nullptr && mUpdateMessage != nullptr) {
         if (auto result = take_finished_update_check()) {

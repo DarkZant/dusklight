@@ -16,9 +16,9 @@ if (DUSK_VERSION_OVERRIDE)
     set(DUSK_WC_BRANCH "")
     set(DUSK_WC_DATE "")
     message(STATUS "Dusklight version overridden to ${DUSK_WC_DESCRIBE}")
-else ()
-    # obtain revision info from git
-    find_package(Git)
+
+# obtain revision info from git
+find_package(Git)
 if (GIT_FOUND)
     # make sure version information gets re-run when the current Git HEAD changes
     execute_process(WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND ${GIT_EXECUTABLE} rev-parse --git-path HEAD
@@ -41,12 +41,12 @@ if (GIT_FOUND)
             OUTPUT_STRIP_TRAILING_WHITESPACE)
     # defines DUSK_WC_DESCRIBE
     execute_process(WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND ${GIT_EXECUTABLE} describe --tags --long --dirty --match "v*"
-            OUTPUT_VARIABLE DUSK_WC_DESCRIBE
+            OUTPUT_VARIABLE GIT_VERSION
             OUTPUT_STRIP_TRAILING_WHITESPACE)
 
     # remove the git hash, then collapse a clean "-0" suffix only
-    string(REGEX REPLACE "-[^-]+(-dirty|)$" "\\1" DUSK_WC_DESCRIBE "${DUSK_WC_DESCRIBE}")
-    string(REGEX REPLACE "-0$" "" DUSK_WC_DESCRIBE "${DUSK_WC_DESCRIBE}")
+    string(REGEX REPLACE "-[^-]+(-dirty|)$" "\\1" GIT_VERSION "${GIT_VERSION}")
+    string(REGEX REPLACE "-0$" "" GIT_VERSION "${GIT_VERSION}")
 
     # defines DUSK_WC_BRANCH
     execute_process(WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
@@ -60,7 +60,7 @@ else ()
     message(STATUS "Unable to find git, commit information will not be available")
 endif ()
 
-if (DUSK_WC_DESCRIBE MATCHES "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)([-+].*)?$")
+if (GIT_VERSION MATCHES "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)([-+].*)?$")
     set(DUSK_SHORT_VERSION_STRING "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}")
     set(_ver_major ${CMAKE_MATCH_1})
     set(_ver_minor ${CMAKE_MATCH_2})
@@ -81,6 +81,7 @@ if (DUSK_WC_DESCRIBE MATCHES "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)([-+].*)?$")
     math(EXPR DUSK_VERSION_CODE
         "${_ver_major} * 10000000 + ${_ver_minor} * 100000 + ${_ver_patch} * 1000 + ${_tweak}")
 else ()
+    message(STATUS "IN UNKNOWN-VERSION ELSE")
     set(DUSK_WC_DESCRIBE "UNKNOWN-VERSION")
     set(DUSK_VERSION_STRING "0.0.0.0")
     set(DUSK_SHORT_VERSION_STRING "0.0.0")
@@ -95,6 +96,7 @@ if(DEFINED ENV{GITHUB_ENV})
     file(APPEND "$ENV{GITHUB_ENV}" "DUSK_VERSION_CODE=${DUSK_VERSION_CODE}\n")
 endif()
 message(STATUS "Dusklight version set to ${DUSK_WC_DESCRIBE}")
+message(STATUS "Dusklight version string set to ${DUSK_VERSION_STRING}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 project(dusklight LANGUAGES C CXX VERSION ${DUSK_VERSION_STRING})
 if (APPLE)
