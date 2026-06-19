@@ -72,7 +72,11 @@ public:
     f32 getNowLightDropRateCalc();
     void setAlphaLightDropAnimeMin();
     void setAlphaLightDropAnimeMax();
+    #if TARGET_PC
+    void drawRupee(u16);
+    #else 
     void drawRupee(s16);
+    #endif
     void setAlphaRupeeChange(bool);
     void setAlphaRupeeAnimeMin();
     void setAlphaRupeeAnimeMax();
@@ -184,7 +188,11 @@ private:
     /* 0x1F0 */ CPaneMgr* mpSIParts[16][3];
     /* 0x2B0 */ CPaneMgr* mpRupeeKeyParent;
     /* 0x2B4 */ CPaneMgr* mpRupeeParent[3];
+    #if TARGET_PC
+    /* 0x2C0 */ CPaneMgr* mpRupeeTexture[5][2];
+    #else 
     /* 0x2C0 */ CPaneMgr* mpRupeeTexture[4][2];
+    #endif
     /* 0x2E0 */ CPaneMgr* mpKeyParent;
     /* 0x2E4 */ CPaneMgr* mpKeyTexture[5];
     /* 0x2F8 */ CPaneMgr* mpButtonParent;
