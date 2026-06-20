@@ -288,7 +288,7 @@ dMeter2Draw_c::~dMeter2Draw_c() {
     JKR_DELETE(mpRupeeKeyParent);
     mpRupeeKeyParent = NULL;
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < RUPEE_DIGITS; i++) {
         JKR_DELETE(mpRupeeTexture[i][0]);
         mpRupeeTexture[i][0] = NULL;
 
@@ -1017,7 +1017,7 @@ void dMeter2Draw_c::initRupeeKey() {
     static u64 const rupeet1_tag[] = {MULTI_CHAR('r_n_1_s'), MULTI_CHAR('r_n_2_s'), MULTI_CHAR('r_n_3_s'), MULTI_CHAR('r_n_4_s')};
     static u64 const rupeet2_tag[] = {MULTI_CHAR('r_n_1'), MULTI_CHAR('r_n_2'), MULTI_CHAR('r_n_3'), MULTI_CHAR('r_n_4')};
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < RUPEE_DIGITS; i++) {
         if (i < 4) {
             mpRupeeTexture[i][0] = JKR_NEW CPaneMgr(mpScreen, rupeet1_tag[i], 0, NULL);
             JUT_ASSERT(0, mpRupeeTexture[i][0] != NULL);
@@ -2171,6 +2171,7 @@ void dMeter2Draw_c::setAlphaLightDropAnimeMax() {
 
 void dMeter2Draw_c::drawRupee(u16 i_rupeeNum) {
     // digits are descending order (4, 3, 2, 1, 0)
+#if TARGET_PC
     int digit_4 = i_rupeeNum / 10000;
     int num = i_rupeeNum % 10000;
 
@@ -2188,6 +2189,13 @@ void dMeter2Draw_c::drawRupee(u16 i_rupeeNum) {
 
     int digit_3 = num / 1000;
     num %= 1000;
+#else 
+    if (i_rupeeNum > 9999)
+        i_rupeeNum = 9999;
+
+    int digit_3 = i_rupeeNum / 1000;
+    int num = i_rupeeNum % 1000;
+#endif
 
     if (i_rupeeNum < 1000) {
         mpRupeeTexture[3][0]->hide();
@@ -2244,7 +2252,7 @@ void dMeter2Draw_c::drawRupee(u16 i_rupeeNum) {
     mpRupeeParent[2]->scale(g_drawHIO.mRupeeFramePosY, g_drawHIO.mRupeeFramePosY);
     mpRupeeParent[2]->paneTrans(g_drawHIO.mRupeeFrameScale, g_drawHIO.mRupeeFramePosX);
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < RUPEE_DIGITS; i++) {
         for (int j = 0; j < 2; j++) {
             mpRupeeTexture[i][j]->scale(g_drawHIO.mRupeeCountScale, g_drawHIO.mRupeeCountScale);
             mpRupeeTexture[i][j]->paneTrans(g_drawHIO.mRupeeCountPosX, g_drawHIO.mRupeeCountPosY);
@@ -2298,7 +2306,7 @@ void dMeter2Draw_c::setAlphaRupeeChange(bool param_0) {
     }
 
     if (set_parent || set_rupeekey || set_rupeecount || param_0) {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < RUPEE_DIGITS; i++) {
             for (int j = 0; j < 2; j++) {
                 mpRupeeTexture[i][j]->setAlphaRate(
                     field_0x7d0 * (field_0x7cc * (mRupeeCountAlpha * mRupeeAlpha)));
