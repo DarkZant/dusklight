@@ -288,7 +288,7 @@ dMeter2Draw_c::~dMeter2Draw_c() {
     JKR_DELETE(mpRupeeKeyParent);
     mpRupeeKeyParent = NULL;
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < RUPEE_DIGITS; i++) {
         JKR_DELETE(mpRupeeTexture[i][0]);
         mpRupeeTexture[i][0] = NULL;
 
@@ -1017,14 +1017,66 @@ void dMeter2Draw_c::initRupeeKey() {
     static u64 const rupeet1_tag[] = {MULTI_CHAR('r_n_1_s'), MULTI_CHAR('r_n_2_s'), MULTI_CHAR('r_n_3_s'), MULTI_CHAR('r_n_4_s')};
     static u64 const rupeet2_tag[] = {MULTI_CHAR('r_n_1'), MULTI_CHAR('r_n_2'), MULTI_CHAR('r_n_3'), MULTI_CHAR('r_n_4')};
 
-    for (int i = 0; i < 4; i++) {
-        mpRupeeTexture[i][0] = JKR_NEW CPaneMgr(mpScreen, rupeet1_tag[i], 0, NULL);
-        JUT_ASSERT(0, mpRupeeTexture[i][0] != NULL);
-        mpRupeeTexture[i][0]->getPanePtr()->setBasePosition(J2DBasePosition_4);
+    for (int i = 0; i < RUPEE_DIGITS; i++) {
+        if (i < 4) {
+            mpRupeeTexture[i][0] = JKR_NEW CPaneMgr(mpScreen, rupeet1_tag[i], 0, NULL);
+            JUT_ASSERT(0, mpRupeeTexture[i][0] != NULL);
+            mpRupeeTexture[i][0]->getPanePtr()->setBasePosition(J2DBasePosition_4);
 
-        mpRupeeTexture[i][1] = JKR_NEW CPaneMgr(mpScreen, rupeet2_tag[i], 0, NULL);
-        JUT_ASSERT(0, mpRupeeTexture[i][1] != NULL);
-        mpRupeeTexture[i][1]->getPanePtr()->setBasePosition(J2DBasePosition_4);
+            mpRupeeTexture[i][1] = JKR_NEW CPaneMgr(mpScreen, rupeet2_tag[i], 0, NULL);
+            JUT_ASSERT(0, mpRupeeTexture[i][1] != NULL);
+            mpRupeeTexture[i][1]->getPanePtr()->setBasePosition(J2DBasePosition_4);
+        } else {
+            // Grab references to the previous digit layers to copy parents and compute positions
+            J2DPicture* prev_digit_shadow = (J2DPicture*)mpRupeeTexture[i - 1][0]->getPanePtr();
+            J2DPicture* prev_digit_main = (J2DPicture*)mpRupeeTexture[i - 1][1]->getPanePtr();
+
+            const ResTIMG* raw_img_shadow = prev_digit_shadow->getTexture(0)->getTexInfo();
+            const ResTIMG* raw_img_main = prev_digit_main->getTexture(0)->getTexInfo();
+
+            J2DPicture* new_digit_shadow = JKR_NEW J2DPicture(raw_img_shadow);
+            J2DPicture* new_digit_main = JKR_NEW J2DPicture(raw_img_main);
+
+            // Insert new pictures into the scene hierarchy
+            prev_digit_shadow->getParentPane()->insertChild(prev_digit_shadow, new_digit_shadow);
+            prev_digit_main->getParentPane()->insertChild(prev_digit_main, new_digit_main);
+
+            // --- Copy properties explicitly ---
+            // Sets the size of the picture
+            new_digit_shadow->mBounds = prev_digit_shadow->mBounds; 
+            new_digit_main->mBounds = prev_digit_main->mBounds;
+            // Sets the colors and the opacity
+            new_digit_shadow->setCornerColor(
+                prev_digit_shadow->corner(0), prev_digit_shadow->corner(1),
+                prev_digit_shadow->corner(2), prev_digit_shadow->corner(3)
+            );
+            new_digit_main->setCornerColor(
+                prev_digit_main->corner(0), prev_digit_main->corner(1),
+                prev_digit_main->corner(2), prev_digit_main->corner(3)
+            );
+
+            new_digit_shadow->setBlackWhite(prev_digit_shadow->getBlack(), prev_digit_shadow->getWhite());
+            new_digit_main->setBlackWhite(prev_digit_main->getBlack(), prev_digit_main->getWhite());
+
+            new_digit_shadow->setAlpha(prev_digit_shadow->getAlpha());
+            new_digit_shadow->setInfluencedAlpha(prev_digit_shadow->isInfluencedAlpha(), false); 
+            new_digit_main->setInfluencedAlpha(prev_digit_main->isInfluencedAlpha(), false);
+
+            // Shift the translation left by exactly one digit column width
+            f32 shiftX = -17.0f;
+            // Sets the position
+            new_digit_shadow->translate(prev_digit_shadow->mTranslateX + shiftX, prev_digit_shadow->mTranslateY);
+            new_digit_main->translate(prev_digit_main->mTranslateX + shiftX, prev_digit_main->mTranslateY);
+
+            // Wrap in active CPaneMgr structures
+            mpRupeeTexture[i][0] = JKR_NEW CPaneMgr();
+            JUT_ASSERT(0, mpRupeeTexture[i][0] != NULL);
+            mpRupeeTexture[i][0]->initiate(new_digit_shadow, NULL);
+
+            mpRupeeTexture[i][1] = JKR_NEW CPaneMgr();
+            JUT_ASSERT(0, mpRupeeTexture[i][1] != NULL);
+            mpRupeeTexture[i][1]->initiate(new_digit_main, NULL);
+        }
     }
 
     mpRupeeParent[0] = JKR_NEW CPaneMgr(mpScreen, MULTI_CHAR('rupi_n'), 2, NULL);
@@ -2117,23 +2169,33 @@ void dMeter2Draw_c::setAlphaLightDropAnimeMax() {
     }
 }
 
-void dMeter2Draw_c::drawRupee(s16 i_rupeeNum) {
-    /* 
-        The game crashes if i_rupeeNum > 9 999 since the UI wasn't made to display five digits. 
-        Possible workaround is to clamp the rupee count shown by the UI but keep the true rupee count intact.
-        Doing so would allow the rupee count to go to 65 535, the u16 limit.
-        Working example: 
+void dMeter2Draw_c::drawRupee(u16 i_rupeeNum) {
+    // digits are in descending order (4, 3, 2, 1, 0)
+#if TARGET_PC
+    int digit_4 = i_rupeeNum / 10000;
+    int num = i_rupeeNum % 10000;
 
-        if (i_rupeeNum > 9999) {
-            i_rupeeNum = 9999;
-        }
-    */ 
-    mpRupeeTexture[3][0]->hide();
-    mpRupeeTexture[3][1]->hide();
+    if (i_rupeeNum < 10000) {
+        mpRupeeTexture[4][0]->hide();
+        mpRupeeTexture[4][1]->hide();
+    } else {
+        mpRupeeTexture[4][0]->show();
+        mpRupeeTexture[4][1]->show();
 
-    // digits are descending order (3, 2, 1, 0)
+        ResTIMG* timg = getNumberTexture(digit_4);
+        static_cast<J2DPicture*>(mpRupeeTexture[4][0]->getPanePtr())->changeTexture(timg, 0);
+        static_cast<J2DPicture*>(mpRupeeTexture[4][1]->getPanePtr())->changeTexture(timg, 0);
+    }
+
+    int digit_3 = num / 1000;
+    num %= 1000;
+#else 
+    // The game crashes if i_rupeeNum > 9 999 since the UI wasn't made to display five digits. 
+    if (i_rupeeNum > 9999)
+        i_rupeeNum = 9999;
     int digit_3 = i_rupeeNum / 1000;
     int num = i_rupeeNum % 1000;
+#endif
 
     if (i_rupeeNum < 1000) {
         mpRupeeTexture[3][0]->hide();
@@ -2190,7 +2252,7 @@ void dMeter2Draw_c::drawRupee(s16 i_rupeeNum) {
     mpRupeeParent[2]->scale(g_drawHIO.mRupeeFramePosY, g_drawHIO.mRupeeFramePosY);
     mpRupeeParent[2]->paneTrans(g_drawHIO.mRupeeFrameScale, g_drawHIO.mRupeeFramePosX);
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < RUPEE_DIGITS; i++) {
         for (int j = 0; j < 2; j++) {
             mpRupeeTexture[i][j]->scale(g_drawHIO.mRupeeCountScale, g_drawHIO.mRupeeCountScale);
             mpRupeeTexture[i][j]->paneTrans(g_drawHIO.mRupeeCountPosX, g_drawHIO.mRupeeCountPosY);
@@ -2244,7 +2306,7 @@ void dMeter2Draw_c::setAlphaRupeeChange(bool param_0) {
     }
 
     if (set_parent || set_rupeekey || set_rupeecount || param_0) {
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < RUPEE_DIGITS; i++) {
             for (int j = 0; j < 2; j++) {
                 mpRupeeTexture[i][j]->setAlphaRate(
                     field_0x7d0 * (field_0x7cc * (mRupeeCountAlpha * mRupeeAlpha)));

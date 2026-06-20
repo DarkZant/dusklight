@@ -139,7 +139,11 @@ private:
     /* 0x1A4 */ int mNowOxygen;
     /* 0x1A8 */ int mMaxOxygen;
     /* 0x1AC */ int field_0x1ac;
+    #if TARGET_PC
+    /* 0x1B0 */ u16 mRupeeNum;
+    #else 
     /* 0x1B0 */ s16 mRupeeNum;
+    #endif
     /* 0x1B2 */ s16 mKeyNum;
     /* 0x1B4 */ s16 field_0x1b4;
     /* 0x1B6 */ u16 mSubContentsStringType;

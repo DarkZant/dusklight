@@ -1267,7 +1267,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                         <li style="display: block; margin-bottom: 4px;">• Default: 300, 600, 1 000</li>
                         <li style="display: block; margin-bottom: 4px;">• HD: 500, 1 000, 2 000</li>
                         <li style="display: block; margin-bottom: 4px;">• Large: 1 000, 5 000, 9 999</li>
-                        <li style="display: block; margin-bottom: 4px;">• Uncapped: 9 999</li>
+                        <li style="display: block; margin-bottom: 4px;">• Uncapped: 65 535</li>
                     </ul>
                 )");
             });

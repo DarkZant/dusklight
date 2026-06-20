@@ -1030,11 +1030,18 @@ void dMeter2_c::moveLightDrop() {
 }
 
 void dMeter2_c::moveRupee() {
+    #if TARGET_PC
+    u16 temp_r5;
+    u32 r29;
+    #else 
     s16 temp_r5;
+    s16 r29;
+    #endif
+
     s32 temp_r0;
 
     temp_r5 = dComIfGs_getRupeeMax();
-    s16 r29 = 0;
+    r29 = 0;
     bool draw_rupee = false;
 
     if (dComIfGp_getItemRupeeCount() != 0) {
@@ -1062,7 +1069,7 @@ void dMeter2_c::moveRupee() {
             }
         }
     }
-
+    // mRupeeNum is the current value shown by the rupee counter
     if (mRupeeNum != dComIfGs_getRupee()) {
         if (mRupeeNum < dComIfGs_getRupee()) {
             mRupeeNum++;

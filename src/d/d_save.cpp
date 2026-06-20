@@ -119,11 +119,11 @@ u8 dSv_player_status_a_c::getMixItemIndex(int i_no) const {
 
 u16 dSv_player_status_a_c::getRupeeMax() const {
     if (mWalletSize < 3) {  // if you make this a default, it wont match. Compiler, pls.
-        #if TARGET_PC
+#if TARGET_PC
         int walletSizeSetting = dusk::getSettings().game.walletSizes;
         if (walletSizeSetting == 3)  // Uncapped
-            return 9999;
-        #endif
+            return 0xFFFF; // The u16 max, 65 535
+#endif
         switch (mWalletSize) {
         case WALLET:
             #if TARGET_PC
