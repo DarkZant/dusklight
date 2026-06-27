@@ -25,6 +25,7 @@
 #include "d/d_timer.h"
 #include "f_op/f_op_kankyo_mng.h"
 #include "m_Do/m_Do_graphic.h"
+#include "dusk/version.hpp"
 
 class dmg_rod_class;
 
@@ -969,11 +970,12 @@ static cXyz zoom_check_pos[20] = {
 static s32 koro2_reset;
 
 static void demo_camera_shop(npc_henna_class* i_this) {
+    // Bass: 43 cm = 17 in | Loach: 50 cm = 20 in | Pike: 56 cm = 22 in | Catfish: 60 cm = 24 in
     static u16 check_size[4] = {
-        0x002B,
-        0x0032,
-        0x0038,
-        0x003C,
+        0x002B, // Hyrule Bass   = 43 cm = 16.9 in
+        0x0032, // Hylian Loach  = 50 cm = 19.7 in
+        0x0038, // Hylian Pike   = 56 cm = 22.0 in
+        0x003C, // Ordon Catfish = 60 cm = 23.6 in
     };
 
     static u8 unk_bss_5134;
@@ -1037,7 +1039,7 @@ static void demo_camera_shop(npc_henna_class* i_this) {
                     }
                 } else {
                     for (s32 i = 0; i < 20; i++) {
-                        if (i != 11 || dComIfGs_getEventReg(check_kind[1]) != 0) {
+                        if (i != 11 || dComIfGs_getEventReg(check_kind[1]) != 0) { // If i != 11 or Hylian Loach was caught
                             unkXyz_78.x = zoom_check_pos[i].x - player->current.pos.x;
                             unkXyz_78.z = zoom_check_pos[i].z - player->current.pos.z;
                             if (JMAFastSqrt(unkXyz_78.x * unkXyz_78.x + unkXyz_78.z * unkXyz_78.z) <
@@ -1052,7 +1054,7 @@ static void demo_camera_shop(npc_henna_class* i_this) {
                     }
                     if (dComIfGp_checkPlayerStatus0(0, 0x2000) != 0) {
                         for (s32 i = 0; i < 20; i++) {
-                            if (i != 11 || dComIfGs_getEventReg(check_kind[1]) != 0) {
+                            if (i != 11 || dComIfGs_getEventReg(check_kind[1]) != 0) { // If i != 11 or Hylian Loach was caught
                                 if ((i >= 12 && i <= 17) || i == 11) {
                                     unkShort1 = 0x600;
                                 } else {
@@ -1459,22 +1461,29 @@ static void demo_camera_shop(npc_henna_class* i_this) {
         if (i_this->field_0x754 >= 15) {
             if (i_this->field_0x754 == 15) {
                 int unkInt1 = 0;
-                switch (i_this->field_0x7b4) {
-                case 0:
+                switch (i_this->field_0x7b4) { // Which part of the Cabin you zoomed onto
+                case 0: // The fish tank
                     for (s32 i = 0; i <= 3; i++) {
-                        if (dComIfGs_getEventReg(check_kind[i]) >= check_size[i]) {
+                        // If the lure record in inches if NA else centimeters is bigger than an arbitrary size in cm
+                        // This is weird since if the region is NA, the size will never be bigger since it is saved in inches
+                        u8 sizeRecord = dComIfGs_getEventReg(check_kind[i]);
+                        #if TARGET_PC
+                        if (dusk::version::isRegionUsa()) // IF the record was saved in inches
+                            sizeRecord *= 2.54f; // Convert the size from inches to centimeters
+                        #endif
+                        if (sizeRecord >= check_size[i]) {
                             unkInt1++;
                         }
                     }
 
-                    if (unkInt1 == 0) {
-                        i_this->mMsgFlow.init(actor, 0x333, 0, NULL);
-                    } else if (unkInt1 >= 4) {
-                        i_this->mMsgFlow.init(actor, 0x336, 0, NULL);
-                    } else if (dComIfGs_getEventReg(check_kind[1]) >= 10) {
-                        i_this->mMsgFlow.init(actor, 0x335, 0, NULL);
-                    } else {
-                        i_this->mMsgFlow.init(actor, 0x334, 0, NULL);
+                    if (unkInt1 == 0) { // If none of the 4 fish kinds beat the size
+                        i_this->mMsgFlow.init(actor, 0x333, 0, NULL); // Go catch fish message
+                    } else if (unkInt1 >= 4) { // If all of the 4 fish kinds beat the size
+                        i_this->mMsgFlow.init(actor, 0x336, 0, NULL); // Dream come true message
+                    } else if (dComIfGs_getEventReg(check_kind[1]) >= 10) { // If a Hylian Loach was kept and not all the 3 other kinds beat the size
+                        i_this->mMsgFlow.init(actor, 0x335, 0, NULL); // Thanks Link for catching one
+                    } else { // If 1, 2 or 3 fish kinds beat the size and a Hylian Loach was never caught
+                        i_this->mMsgFlow.init(actor, 0x334, 0, NULL); // Talks about the different fish kinds you can catch
                     }
                     break;
                 case 2:

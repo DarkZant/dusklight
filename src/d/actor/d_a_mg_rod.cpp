@@ -584,7 +584,7 @@ static void rod_main(dmg_rod_class* i_this) {
 }
 
 static npc_henna_class* henna;
-
+// data_804BBBD4: 0 = centimeters (cm), 1 = inches (in), 2 = cm but PAL english
 static u8 data_804BBBD4;
 static u8 hio_set;
 
@@ -2617,17 +2617,17 @@ static void lure_catch(dmg_rod_class* i_this) {
         return;
     }
 
-    s16 var_r26;
+    s16 var_r26; // Size of the fish in inches (North America) or centimeters (any other region)
     if (data_804BBBD4 == 1) {
-        var_r26 = 39.37008f * mgfish->mJointScale;
+        var_r26 = 39.37008f * mgfish->mJointScale; // Convert meters to inches
     } else {
-        var_r26 = 100.0f * mgfish->mJointScale;
+        var_r26 = 100.0f * mgfish->mJointScale; // Convert meters to centimeters
     }
 
-    if (var_r26 > 99) {
+    if (var_r26 > 99) { // Cap to 99 cm
         var_r26 = 99;
     }
-
+    // 0 = Hyrule Bass, 1 = Hylian Loach, 2 = Hylian Pike, 3 = Ordon Catfish
     u8 fish_kind = mgfish->mKind2;
     if (l_HIO.force_fish_msg_output != 0) {
         fish_kind = l_HIO.force_fish_msg_output - 1;
@@ -2635,19 +2635,19 @@ static void lure_catch(dmg_rod_class* i_this) {
 
     if (i_this->play_cam_timer == 1) {
         daAlink_getAlinkActorClass()->changeFishGetFace(1);
-        if (data_804BBBD4 == 2) {
-            f32 var_f31 = var_r26 / 2.54f;
-            f32 var_f30 = dComIfGs_getEventReg(check_kind[fish_kind]) / 2.54f;
+        if (data_804BBBD4 == 2) { // If PAL English
+            f32 var_f31 = var_r26 / 2.54f; // Size in inches
+            f32 var_f30 = dComIfGs_getEventReg(check_kind[fish_kind]) / 2.54f; // Saved size in inches
 
-            if ((u8)var_f31 > (u8)var_f30) {
-                i_this->field_0x14c0 = 1;
+            if ((u8)var_f31 > (u8)var_f30) { // If fish > biggest caught fish
+                i_this->field_0x14c0 = 1; // Ask to keep it
             } else {
-                i_this->field_0x14c0 = 0;
+                i_this->field_0x14c0 = 0; // Force release
             }
-        } else if ((u8)var_r26 > dComIfGs_getEventReg(check_kind[fish_kind])) {
-            i_this->field_0x14c0 = 1;
+        } else if ((u8)var_r26 > dComIfGs_getEventReg(check_kind[fish_kind])) { // If fish > biggest caught fish
+            i_this->field_0x14c0 = 1; // Ask to keep it
         } else {
-            i_this->field_0x14c0 = 0;
+            i_this->field_0x14c0 = 0; // Force release
         }
     }
 
@@ -2700,8 +2700,8 @@ static void lure_catch(dmg_rod_class* i_this) {
             static u16 catch_msgn_11[] = {0x02E0, 0x02E3, 0x02E1, 0x02E2};
             static u16 catch_msgn_12[] = {0x02E4, 0x02E7, 0x02E5, 0x02E6};
 
-            if (dComIfGs_getEventReg(check_kind[fish_kind]) == 0) {
-                dComIfGs_setEventReg(check_kind[fish_kind], 1);
+            if (dComIfGs_getEventReg(check_kind[fish_kind]) == 0) { // If Never caught this fish
+                dComIfGs_setEventReg(check_kind[fish_kind], 1); // Set that one was caught but not necessarily kept (size of 1 cm, which is impossible)
                 if (henna != NULL) {
                     i_this->catch_flow_id = catch_msgn_20[fish_kind];
                 } else {
@@ -2719,10 +2719,10 @@ static void lure_catch(dmg_rod_class* i_this) {
                 i_this->catch_flow_id = catch_msgn_12[fish_kind];
             }
 
-            if (data_804BBBD4 == 2) {
-                dComIfGp_setMessageCountNumber((u8)(var_r26 / 2.54f));
+            if (data_804BBBD4 == 2) { // If PAL English
+                dComIfGp_setMessageCountNumber((u8)(var_r26 / 2.54f)); // Convert cm to inches and show size in inches
             } else {
-                dComIfGp_setMessageCountNumber(var_r26);
+                dComIfGp_setMessageCountNumber(var_r26); // Show size in inches for NA or in cm for the rest of the world
             }
 
             i_this->msgflow.init(actor, i_this->catch_flow_id, 0, NULL);
@@ -2733,10 +2733,10 @@ static void lure_catch(dmg_rod_class* i_this) {
             i_this->msg_flow_state = 2;
             int sp10 = 0;
 
-            if (i_this->field_0x14c0 != 0) { // Keep the fish
+            if (i_this->field_0x14c0 != 0) { // If the caught fish was bigger than the record
                 data_80450C9B = 1;
-                if (dMsgObject_getSelectCursorPos() == 0) {
-                    dComIfGs_setEventReg(check_kind[fish_kind], var_r26);
+                if (dMsgObject_getSelectCursorPos() == 0) { // If the option to keep the fish is selected
+                    dComIfGs_setEventReg(check_kind[fish_kind], var_r26); // Save the fish size in inches for NA or in cm for the rest of the world
                     sp10 = 1;
                     actor->health = 1;
                     i_this->mg_fish_id = -1;
@@ -2750,8 +2750,8 @@ static void lure_catch(dmg_rod_class* i_this) {
                     daAlink_getAlinkActorClass()->onFishingKeep();
                     data_80450C9B = 2;
 
-                    if (fish_kind == 1) {
-                        if (var_r26 >= 72) {
+                    if (fish_kind == 1) { // If Hylian Loach
+                        if (var_r26 >= 72) { // If size is bigger than 72 (cannot happen in NA)
                             data_80450C9B = 4;
                         } else {
                             data_80450C9B = 3;
@@ -2760,14 +2760,14 @@ static void lure_catch(dmg_rod_class* i_this) {
                 }
             }
 
-            if (sp10 == 0) {
+            if (sp10 == 0) { //  If the fish was released
                 if (i_this->catch_flow_id == 0x2D1 || i_this->catch_flow_id == 0x2D5) {
                     i_this->field_0x14c2 = 1;
                 } else {
                     mgfish_a->health = 1;
                 }
-            } else {
-                mgfish_a->health = 2;
+            } else { // If the fish was kept
+                mgfish_a->health = 2; // Make it so it deletes itself
             }
             #if TARGET_PC
             if (dusk::getSettings().game.keepFish && mgfish_a->health == 1) {
