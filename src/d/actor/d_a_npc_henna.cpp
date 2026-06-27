@@ -1968,7 +1968,7 @@ static void demo_camera_shop(npc_henna_class* i_this) {
                         /* dSv_event_flag_c::KORO2_ALLCLEAR - Fishing - After all stages (8-8) of roll goal game cleared */
                         dComIfGs_onEventBit(dSv_event_flag_c::saveBitLabels[0x335]);
 #if TARGET_PC
-                        dComIfGp_setItemRupeeCount(dComIfGs_getRupeeMax());
+                        dComIfGp_setItemRupeeCount(2000);  // The max official rupees possible (TPHD)
 #else
                         dComIfGp_setItemRupeeCount(1000);
 #endif
