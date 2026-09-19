@@ -274,7 +274,7 @@ version-info {
 }
 
 @media (min-width: 1216dp) {
-    #version-text {
+    #version-dz {
       font-size: 4vw;
     }
 }

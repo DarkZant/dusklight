@@ -72,8 +72,8 @@ const Rml::String kDocumentSource = R"RML(
             <div id="git-version">
                 Dusklight v<span id="version-num"></span>
             </div>
-            <div class="version" style="color: #FFD700;">
-                <span id="version-text"></span>
+            <div class="version" style="color: #FFD700;"> 
+                <span id="version-dz">DarkZant Edition</span>
             </div>
             <div id="update-status" class="update" style="visibility: hidden;" t>
                 <span id="update-message"></span>
@@ -1127,7 +1127,7 @@ void Prelaunch::update() {
         set_text_content(mVersion, Rml::String{versionStr});
     }
     if (mVersionNum != nullptr) {
-        std::string_view versionNumStr(DUSK_VERSION_STRING);
+        std::string_view versionNumStr("2.0.0");
 
         size_t lastDot = versionNumStr.find_last_of('.');
         if (lastDot != std::string_view::npos) 

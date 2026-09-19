@@ -715,7 +715,7 @@ int game_main(int argc, char* argv[]) {
 #endif
 
     VISetWindowTitle(
-        fmt::format("Dusklight v{} : {} [{}]", DUSK_VERSION_STRING, DUSK_WC_DESCRIBE, dusk::backend_name(auroraInfo.backend))
+        fmt::format("Dusklight {}: DarkZant Edition [{}]", BOREALIS_APP_DESCRIBE, dusk::backend_name(auroraInfo.backend))
         .c_str());
 
     if (dusk::getSettings().video.lockAspectRatio) {
