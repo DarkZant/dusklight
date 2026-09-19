@@ -1,5 +1,12 @@
 #include "dusk/settings.h"
+
 #include "dusk/config.hpp"
+#include "dusk/game_mode.hpp"
+#include "dusk/texture_replacements.hpp"
+#include "dusk/ui/ui.hpp"
+
+#include <aurora/aurora.h>
+#include <dolphin/vi.h>
 
 namespace dusk {
 
@@ -14,16 +21,17 @@ UserSettings g_userSettings = {
         .rememberWindowSize {"video.rememberWindowSize", false},
         .lastWindowWidth {"video.lastWindowWidth", 0},
         .lastWindowHeight {"video.lastWindowHeight", 0},
+        .uiScale {"video.uiScale", 100},
     },
 
     .audio = {
+        .outputMode {"audio.outputMode", AudioOutputMode::StereoSpeakers},
         .masterVolume {"audio.masterVolume", 60},
         .mainMusicVolume {"audio.mainMusicVolume", 100},
         .subMusicVolume {"audio.subMusicVolume", 100},
         .soundEffectsVolume {"audio.soundEffectsVolume", 100},
         .fanfareVolume {"audio.fanfareVolume", 100},
         .enableReverb {"audio.enableReverb", true},
-        .enableHrtf {"audio.enableHrtf", false},
         .menuSounds {"audio.menuSounds", true},
     },
 
@@ -36,6 +44,7 @@ UserSettings g_userSettings = {
         .walletSizes{"game.walletSizes", 0},
         .noReturnRupees {"game.noReturnRupees", false},
         .disableRupeeCutscenes {"game.disableRupeeCutscenes", false},
+        .fastTransitions {"game.fastTransitions", false},
         .noSwordRecoil {"game.noSwordRecoil", false},
         .damageMultiplier {"game.damageMultiplier", 1},
         .noHeartDrops {"game.noHeartDrops", false},
@@ -48,9 +57,11 @@ UserSettings g_userSettings = {
         .buttonFishing {"game.buttonFishing", false},
         .instantSaves {"game.instantSaves", false},
         .instantText {"game.instantText", false},
+        .holdToMash {"game.holdToMash", false},
         .sunsSong {"game.sunsSong", false},
         .autoSave {"game.autoSave", false},
         .enhancedMapMenus {"game.enhancedMapMenus", false},
+        .aimingReticle {"game.aimingReticle", false},
 
         // Preferences
         .enableMirrorMode {"game.enableMirrorMode", false},
@@ -75,6 +86,8 @@ UserSettings g_userSettings = {
         .resampler {"game.resampler", Resampler::Bilinear},
         .enableMapBackground {"game.enableMapBackground", true},
         .disableCutscenePillarboxing {"game.disableCutscenePillarboxing", false},
+        .disableLetterboxing {"game.disableLetterboxing", LetterboxMode::Off},
+        .enableHighQualityMinimapTextures {"game.enableHighQualityMinimapTextures", true},
 
         // Audio
         .noLowHpSound {"game.noLowHpSound", false},
@@ -97,6 +110,7 @@ UserSettings g_userSettings = {
         .invertMouseY {"game.invertMouseY", false},
         .freeCamera {"game.freeCamera", false},
         .enableTouchControls {"game.enableTouchControls", false},
+        .touchTargeting {"game.touchTargeting", TouchTargeting::Hybrid},
         .enableMenuPointer {"game.enableMenuPointer", true},
         .touchControlsLayout {"game.touchControlsLayout", ui::ControlLayout{}},
         .invertCameraXAxis {"game.invertCameraXAxis", false},
@@ -133,13 +147,14 @@ UserSettings g_userSettings = {
         .enableIndefiniteItemDrops {"game.enableIndefiniteItemDrops", false},
         .moonJump {"game.moonJump", false},
         .superClawshot {"game.superClawshot", false},
-        .alwaysGreatspin {"game.alwaysGreatspin", false},
+        .alwaysGreatspin {"game.alwaysGreatspin", AlwaysGreatspinMode::OFF},
         .enableFastIronBoots {"game.enableFastIronBoots", false},
         .canTransformAnywhere {"game.canTransformAnywhere", false},
         .fastRoll {"game.fastRoll", false},
         .fastSpinner {"game.fastSpinner", false},
         .armorRupeeDrain {"game.armorRupeeDrain", MagicArmorMode::NORMAL},
         .invincibleEnemies {"game.invincibleEnemies", false},
+        .easyQuickSpin {"game.easyQuickSpin", false},
 
         // Technical
         .restoreWiiGlitches {"game.restoreWiiGlitches", false},
@@ -155,7 +170,10 @@ UserSettings g_userSettings = {
         .recordingMode {"game.recordingMode", false},
         .removeQuestMapMarkers {"game.removeQuestMapMarkers", false},
         .showInputViewer {"game.showInputViewer", false},
-        .showInputViewerGyro {"game.showInputViewerGyro", false}
+        .showInputViewerGyro {"game.showInputViewerGyro", false},
+        .enableMoveLinkCombo {"game.enableMoveLinkCombo", false},
+        .enableTeleportCombo {"game.enableTeleportCombo", false},
+        .lastSelectedGameModeId {"game.lastSelectedGameModeId", gamemode::kVanillaGameModeId}
     },
 
     .backend = {
@@ -163,9 +181,9 @@ UserSettings g_userSettings = {
         .isoVerification {"backend.isoVerification", DiscVerificationState::Unknown},
         .graphicsBackend {"backend.graphicsBackend", "auto"},
         .skipPreLaunchUI {"backend.skipPreLaunchUI", false},
-        .showPipelineCompilation {"backend.showPipelineCompilation", false},
         .wasPresetChosen {"backend.wasPresetChosen", false},
         .checkForUpdates {"backend.checkForUpdates", true},
+        .checkForModUpdates {"backend.checkForModUpdates", true},
         .cardFileType {"backend.cardFileType", static_cast<int>(CARD_GCIFOLDER)},
         .enableAdvancedSettings {"backend.enableAdvancedSettings", false},
     },
@@ -215,6 +233,22 @@ UserSettings& getSettings() {
     return g_userSettings;
 }
 
+void applyInternalResolutionScale(int scale) {
+    VISetFrameBufferScale(static_cast<float>(scale));
+}
+
+void applyResampler(Resampler resampler) {
+    switch (resampler) {
+    case Resampler::Area:
+        aurora_set_resampler(SAMPLER_AREA);
+        break;
+    case Resampler::Bilinear:
+    default:
+        aurora_set_resampler(SAMPLER_BILINEAR);
+        break;
+    }
+}
+
 void registerSettings() {
     // Video
     Register(g_userSettings.video.enableFullscreen);
@@ -226,15 +260,17 @@ void registerSettings() {
     Register(g_userSettings.video.rememberWindowSize);
     Register(g_userSettings.video.lastWindowWidth);
     Register(g_userSettings.video.lastWindowHeight);
+    Register(g_userSettings.video.uiScale, 
+        [](const int&, const int&) { dusk::ui::apply_scale(); });
 
     // Audio
+    Register(g_userSettings.audio.outputMode);
     Register(g_userSettings.audio.masterVolume);
     Register(g_userSettings.audio.mainMusicVolume);
     Register(g_userSettings.audio.subMusicVolume);
     Register(g_userSettings.audio.soundEffectsVolume);
     Register(g_userSettings.audio.fanfareVolume);
     Register(g_userSettings.audio.enableReverb);
-    Register(g_userSettings.audio.enableHrtf);
     Register(g_userSettings.audio.menuSounds);
 
     // Game
@@ -244,6 +280,7 @@ void registerSettings() {
     Register(g_userSettings.game.walletSizes);
     Register(g_userSettings.game.noReturnRupees);
     Register(g_userSettings.game.disableRupeeCutscenes);
+    Register(g_userSettings.game.fastTransitions);
     Register(g_userSettings.game.noSwordRecoil);
     Register(g_userSettings.game.damageMultiplier);
     Register(g_userSettings.game.noHeartDrops);
@@ -255,9 +292,11 @@ void registerSettings() {
     Register(g_userSettings.game.buttonFishing);
     Register(g_userSettings.game.instantSaves);
     Register(g_userSettings.game.instantText);
+    Register(g_userSettings.game.holdToMash);
     Register(g_userSettings.game.sunsSong);
     Register(g_userSettings.game.autoSave);
     Register(g_userSettings.game.enhancedMapMenus);
+    Register(g_userSettings.game.aimingReticle);
     Register(g_userSettings.game.enableMirrorMode);
     Register(g_userSettings.game.invertCameraXAxis);
     Register(g_userSettings.game.invertCameraYAxis);
@@ -271,18 +310,24 @@ void registerSettings() {
     Register(g_userSettings.game.touchCameraYSensitivity);
     Register(g_userSettings.game.minimalHUD);
     Register(g_userSettings.game.hudScale);
-    Register(g_userSettings.game.pauseOnFocusLost);
+    Register(g_userSettings.game.pauseOnFocusLost,
+        [](const bool& value, const bool&) { aurora_set_pause_on_focus_lost(value); });
     Register(g_userSettings.game.enableDiscordPresence);
     Register(g_userSettings.game.bloomMode);
     Register(g_userSettings.game.bloomMultiplier);
     Register(g_userSettings.game.depthOfFieldMode);
     Register(g_userSettings.game.disableWaterRefraction);
-    Register(g_userSettings.game.enableTextureReplacements);
-    Register(g_userSettings.game.internalResolutionScale);
-    Register(g_userSettings.game.resampler);
+    Register(g_userSettings.game.enableTextureReplacements,
+        [](const bool&, const bool&) { texture_replacements::reload(); });
+    Register(g_userSettings.game.internalResolutionScale,
+        [](const int& value, const int&) { applyInternalResolutionScale(value); });
+    Register(g_userSettings.game.resampler,
+        [](const Resampler& value, const Resampler&) { applyResampler(value); });
     Register(g_userSettings.game.shadowResolutionMultiplier);
     Register(g_userSettings.game.enableMapBackground);
     Register(g_userSettings.game.disableCutscenePillarboxing);
+    Register(g_userSettings.game.disableLetterboxing);
+    Register(g_userSettings.game.enableHighQualityMinimapTextures);
     Register(g_userSettings.game.enableFastIronBoots);
     Register(g_userSettings.game.canTransformAnywhere);
     Register(g_userSettings.game.fastRoll);
@@ -304,6 +349,9 @@ void registerSettings() {
     Register(g_userSettings.game.removeQuestMapMarkers);
     Register(g_userSettings.game.showInputViewer);
     Register(g_userSettings.game.showInputViewerGyro);
+    Register(g_userSettings.game.enableMoveLinkCombo);
+    Register(g_userSettings.game.enableTeleportCombo);
+    Register(g_userSettings.game.lastSelectedGameModeId);
     Register(g_userSettings.game.fastSpinner);
     Register(g_userSettings.game.infiniteHearts);
     Register(g_userSettings.game.infiniteArrows);
@@ -319,6 +367,8 @@ void registerSettings() {
     Register(g_userSettings.game.superClawshot);
     Register(g_userSettings.game.alwaysGreatspin);
     Register(g_userSettings.game.invincibleEnemies);
+    Register(g_userSettings.game.easyQuickSpin);
+
     Register(g_userSettings.game.enableFrameInterpolation);
     Register(g_userSettings.game.enableGyroAim);
     Register(g_userSettings.game.enableGyroRollgoal);
@@ -336,6 +386,7 @@ void registerSettings() {
     Register(g_userSettings.game.invertMouseY);
     Register(g_userSettings.game.freeCamera);
     Register(g_userSettings.game.enableTouchControls);
+    Register(g_userSettings.game.touchTargeting);
     Register(g_userSettings.game.enableMenuPointer);
     Register(g_userSettings.game.touchControlsLayout);
     Register(g_userSettings.game.debugFlyCam);
@@ -351,9 +402,9 @@ void registerSettings() {
     Register(g_userSettings.backend.isoVerification);
     Register(g_userSettings.backend.graphicsBackend);
     Register(g_userSettings.backend.skipPreLaunchUI);
-    Register(g_userSettings.backend.showPipelineCompilation);
     Register(g_userSettings.backend.wasPresetChosen);
     Register(g_userSettings.backend.checkForUpdates);
+    Register(g_userSettings.backend.checkForModUpdates);
     Register(g_userSettings.backend.cardFileType);
     Register(g_userSettings.backend.enableAdvancedSettings);
 
@@ -396,7 +447,22 @@ static TransientSettings g_transientSettings = {
         .colliderViewOpacity = 50.0f,
         .drawRange = 100.0f,
     },
-    .skipFrameRateLimit = false,
+    .triggerView = {
+        .loadZones = false,
+        .eventAreas = false,
+        .switchAreas = false,
+        .eventTags = false,
+        .midnaStops = false,
+        .twilightGates = false,
+        .checkpoints = false,
+        .paths = false,
+        .transformDists = false,
+        .attentionDists = false,
+        .purpleMistAvoid = false,
+        .leevers = false,
+        .opacity = 75.0f,
+    },
+    .turboMode = false,
 };
 
 TransientSettings& getTransientSettings() {

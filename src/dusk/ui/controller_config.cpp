@@ -243,11 +243,7 @@ int rumble_raw_to_percent(u16 raw) {
 
 }  // namespace
 
-ControllerConfigWindow::ControllerConfigWindow(bool prelaunch) {
-    if (prelaunch) {
-        mSuppressNavFallback = true;
-    }
-
+ControllerConfigWindow::ControllerConfigWindow() {
     listen(
         Rml::EventId::Keydown,
         [this](Rml::Event& event) {
@@ -278,7 +274,7 @@ ControllerConfigWindow::ControllerConfigWindow(bool prelaunch) {
 void ControllerConfigWindow::hide(bool close) {
     stop_rumble_test();
     cancel_pending_binding();
-    config::Save();
+    config::save();
     Window::hide(close);
 }
 
@@ -295,10 +291,9 @@ void ControllerConfigWindow::build_port_tab(Rml::Element* content, int port) {
     mActivePort = port;
 
     auto addPageButton = [this, &leftPane, &rightPane, port](
-                             Page page, Rml::String key, auto getValue, auto isDisabled) {
-        leftPane.register_control(leftPane.add_select_button({
-                                      .key = std::move(key),
-                                      .getValue = std::move(getValue),
+                             Page page, Rml::String text, std::function<bool()> isDisabled = {}) {
+        leftPane.register_control(leftPane.add_group_button({
+                                      .text = std::move(text),
                                       .isDisabled = std::move(isDisabled),
                                   }),
             rightPane, [this, port, page](Pane& pane) {
@@ -307,12 +302,20 @@ void ControllerConfigWindow::build_port_tab(Rml::Element* content, int port) {
             });
     };
 
-    addPageButton(Page::Controller, "Device", [port] { return current_controller_name(port); }, [] { return false; });
-    addPageButton(Page::Buttons, "Buttons", [] { return Rml::String(">"); }, [] { return false; });
-    addPageButton(Page::Triggers, "Triggers", [] { return Rml::String(">"); }, [] { return false; });
-    addPageButton(Page::Sticks, "Sticks", [] { return Rml::String(">"); }, [] { return false; });
-    addPageButton(Page::Rumble, "Rumble", [] { return Rml::String(">"); }, [port] { return !PADSupportsRumbleIntensity(static_cast<u32>(port)); });
-    addPageButton(Page::Actions, "Custom Action Bindings", [] {return Rml::String(">"); }, [] { return false; });
+    leftPane.register_control(leftPane.add_select_button({
+                                  .key = "Device",
+                                  .getValue = [port] { return current_controller_name(port); },
+                              }),
+        rightPane, [this, port](Pane& pane) {
+            mPage = Page::Controller;
+            render_page(pane, port, Page::Controller);
+        });
+    addPageButton(Page::Buttons, "Buttons");
+    addPageButton(Page::Triggers, "Triggers");
+    addPageButton(Page::Sticks, "Sticks");
+    addPageButton(Page::Rumble, "Rumble",
+        [port] { return !PADSupportsRumbleIntensity(static_cast<u32>(port)); });
+    addPageButton(Page::Actions, "Custom Action Bindings");
 
     leftPane.add_section("Options");
     leftPane.register_control(leftPane.add_child<BoolButton>(BoolButton::Props{
@@ -403,7 +406,7 @@ void ControllerConfigWindow::render_page(Pane& pane, int port, Page page) {
                 PADClearPort(port);
                 PADSetKeyboardActive(static_cast<u32>(port), FALSE);
                 PADSerializeMappings();
-                ClearAllActionBindings(port);
+                config::ClearAllActionBindings(port);
                 refresh_controller_page();
             });
 
@@ -417,7 +420,7 @@ void ControllerConfigWindow::render_page(Pane& pane, int port, Page page) {
                 PADClearPort(port);
                 PADSetKeyboardActive(static_cast<u32>(port), TRUE);
                 PADSerializeMappings();
-                ClearAllActionBindings(port);
+                config::ClearAllActionBindings(port);
             });
 
         const u32 controllerCount = PADCount();
@@ -439,7 +442,7 @@ void ControllerConfigWindow::render_page(Pane& pane, int port, Page page) {
                     PADSetKeyboardActive(static_cast<u32>(port), FALSE);
                     PADSetPortForIndex(i, port);
                     PADSerializeMappings();
-                    ClearAllActionBindings(port);
+                    config::ClearAllActionBindings(port);
                 });
         }
         break;
@@ -1125,7 +1128,7 @@ void ControllerConfigWindow::poll_pending_binding() {
                 return;
             }
             mPendingActionBinding->setValue(button);
-            config::Save();
+            config::save();
             finish_pending_binding(completedPort);
         }
         return;
