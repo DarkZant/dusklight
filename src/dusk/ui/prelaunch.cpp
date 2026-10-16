@@ -1122,21 +1122,16 @@ void Prelaunch::update() {
             mDiscDetail->SetProperty(Rml::PropertyId::Display, Rml::Style::Display::None);
         }
     }
-    if (mVersion != nullptr) {
+    if (mVersionNum != nullptr) {
         std::string_view versionStr(BOREALIS_APP_DESCRIBE);
         if (versionStr[0] == 'v') {
             versionStr = versionStr.substr(1);
         }
-        set_text_content(mVersion, Rml::String{versionStr});
-    }
-    if (mVersionNum != nullptr) {
-        std::string_view versionNumStr("2.0.0");
 
-        size_t lastDot = versionNumStr.find_last_of('.');
-        if (lastDot != std::string_view::npos) 
-            versionNumStr = versionNumStr.substr(0, lastDot);
-
-        mVersionNum->SetInnerRML(escape(versionNumStr));
+        size_t commitDashPos = versionStr.find_last_of('-');
+        if (commitDashPos != std::string_view::npos)
+            versionStr = versionStr.substr(0, commitDashPos);
+        set_text_content(mVersionNum, Rml::String{versionStr});
     }
     if (mUpdateStatus != nullptr && mUpdateMessage != nullptr) {
         if (auto result = take_finished_update_check()) {
