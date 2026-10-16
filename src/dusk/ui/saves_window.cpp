@@ -287,9 +287,12 @@ void confirm_import(Artifact artifact) {
         show_message("Import Failed", context.result.message, true, &finish_import_flow);
         return;
     }
-    if (!raw && (artifact.header.game != context.value.identity.game ||
-                    artifact.header.maker != context.value.identity.maker))
-    {
+    const auto compatibility =
+        raw ? save_manager::DiscCompatibility::Exact :
+              save_manager::disc_compatibility(artifact.header, context.value.identity);
+    const bool changingVersion = (compatibility == save_manager::DiscCompatibility::RegionChange ||
+                                 compatibility == save_manager::DiscCompatibility::PlatformChange);
+    if (compatibility == save_manager::DiscCompatibility::Incompatible) {
         show_message("Import Failed", "This save does not match the configured disc.", true,
             &finish_import_flow);
         return;
@@ -342,7 +345,7 @@ void confirm_import(Artifact artifact) {
             {
                 {.label = "Cancel", .onPressed = cancel},
                 {
-                    .label = "Import",
+                    .label = changingVersion ? "Import Anyway" : "Import",
                     .onPressed =
                         [items, keepModData, hasBundledModData](Modal& modal) {
                             const auto action = hasBundledModData ? ModDataAction::Replace :
@@ -352,6 +355,7 @@ void confirm_import(Artifact artifact) {
                         },
                     .isDisabled =
                         [items] { return std::ranges::none_of(*items, &ImportItem::selected); },
+                    .icon = changingVersion ? "warning" : "",
                 },
             },
         .onDismiss = cancel,
@@ -371,9 +375,14 @@ void confirm_import(Artifact artifact) {
             });
         }
     } else {
+        const auto* regionMessage = changingVersion ?
+                                        " This save is from a different region or "
+                                        "platform than the configured disc and may "
+                                        "not work correctly." :
+                                        "";
         modal->set_body(
-            fmt::format("{} the <b>{}</b> save?{}", replacingSave ? "Replace" : "Import",
-                escape(mode_label(items->front().context.identity.saveName)),
+            fmt::format("{} the <b>{}</b> save?{}{}", replacingSave ? "Replace" : "Import",
+                escape(mode_label(items->front().context.identity.saveName)), regionMessage,
                 replacingSave ? " A backup will be made first." : ""));
     }
     if (!replacingRawImage) {
